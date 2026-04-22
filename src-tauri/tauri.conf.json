@@ -16,13 +16,24 @@
       "shell": {
         "all": false,
         "open": true
+      },
+      "dialog": {
+        "all": false,
+        "open": true
+      },
+      "fs": {
+        "all": false,
+        "readFile": true,
+        "scope": ["**"]
       }
     },
     "windows": [
       {
-        "title": "mdviewer",
-        "width": 800,
-        "height": 600
+        "title": "MD Viewer",
+        "width": 1100,
+        "height": 750,
+        "minWidth": 800,
+        "minHeight": 600
       }
     ],
     "security": {
