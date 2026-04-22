@@ -4,6 +4,7 @@ import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import type { Components } from "react-markdown";
+import { open } from "@tauri-apps/api/shell";
 import Mermaid from "./Mermaid";
 
 interface MarkdownRendererProps {
@@ -11,6 +12,15 @@ interface MarkdownRendererProps {
 }
 
 const components: Components = {
+  a({ href, children, ...props }) {
+    const handleClick = (e: React.MouseEvent) => {
+      if (href && /^https?:\/\//.test(href)) {
+        e.preventDefault();
+        open(href);
+      }
+    };
+    return <a href={href} onClick={handleClick} {...props}>{children}</a>;
+  },
   code({ className, children, ...props }) {
     const match = /language-(\w+)/.exec(className || "");
     const lang = match?.[1];
