@@ -1,6 +1,8 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { open } from "@tauri-apps/api/dialog";
 import { readTextFile } from "@tauri-apps/api/fs";
+import { invoke } from "@tauri-apps/api/tauri";
+import { listen } from "@tauri-apps/api/event";
 import { useTheme } from "./hooks/useTheme";
 import Toolbar from "./components/Toolbar";
 import Sidebar from "./components/Sidebar";
@@ -13,6 +15,8 @@ function App() {
   const [fileName, setFileName] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [resizing, setResizing] = useState(false);
+  const filePathRef = useRef(filePath);
+  filePathRef.current = filePath;
 
   const openFilePath = useCallback(async (path: string) => {
     try {
@@ -21,9 +25,29 @@ function App() {
       setFilePath(path);
       const name = path.split(/[/\\]/).pop() || path;
       setFileName(name);
+      // Start watching the new file
+      await invoke("watch_file", { path });
     } catch (err) {
       console.error("Failed to open file:", err);
     }
+  }, []);
+
+  // Listen for file-changed events from Rust backend
+  useEffect(() => {
+    const unlisten = listen<string>("file-changed", async () => {
+      const current = filePathRef.current;
+      if (!current) return;
+      try {
+        const content = await readTextFile(current);
+        setMarkdown(content);
+      } catch (err) {
+        console.error("Failed to reload file:", err);
+      }
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
   }, []);
 
   const openFileDialog = useCallback(async () => {
