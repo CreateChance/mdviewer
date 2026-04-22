@@ -460,3 +460,121 @@ body {
 [data-theme="dark"] .hljs-variable { color: #8ddb8c; }
 [data-theme="dark"] .hljs-deletion { color: #f47067; }
 [data-theme="dark"] .hljs-meta { color: #f69d50; }
+
+/* ===== File Explorer (right panel) ===== */
+.file-explorer {
+  width: 240px;
+  min-width: 240px;
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: width 0.2s, min-width 0.2s;
+}
+.file-explorer.collapsed {
+  width: 36px !important;
+  min-width: 36px !important;
+}
+
+.fe-toggle {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px;
+  z-index: 1;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+.fe-toggle:hover {
+  background: var(--toc-hover-bg);
+}
+.file-explorer.collapsed .fe-toggle {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.fe-nav {
+  padding: 36px 0 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.fe-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  padding: 0 12px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fe-list {
+  list-style: none;
+}
+
+.fe-dir-btn,
+.fe-file-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 0;
+  line-height: 1.4;
+  transition: background 0.15s, color 0.15s;
+}
+.fe-dir-btn:hover,
+.fe-file-btn:hover {
+  background: var(--toc-hover-bg);
+  color: var(--text-primary);
+}
+
+.fe-icon {
+  font-size: 11px;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.fe-dir-name {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fe-file-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fe-file.active .fe-file-btn {
+  background: var(--toc-active-bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* Welcome actions */
+.welcome-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}

@@ -2,14 +2,18 @@ interface ToolbarProps {
   theme: "light" | "dark";
   onToggleTheme: () => void;
   onOpenFile: () => void;
+  onOpenFolder: () => void;
   fileName: string;
 }
 
-export default function Toolbar({ theme, onToggleTheme, onOpenFile, fileName }: ToolbarProps) {
+export default function Toolbar({ theme, onToggleTheme, onOpenFile, onOpenFolder, fileName }: ToolbarProps) {
   return (
     <header className="toolbar">
       <div className="toolbar-left">
         <button className="toolbar-btn" onClick={onOpenFile} title="打开文件">
+          📄
+        </button>
+        <button className="toolbar-btn" onClick={onOpenFolder} title="打开文件夹">
           📂
         </button>
         <span className="toolbar-filename">{fileName || "MD Viewer"}</span>

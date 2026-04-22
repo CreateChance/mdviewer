@@ -19,7 +19,11 @@
       },
       "dialog": {
         "all": false,
-        "open": true
+        "open": true,
+        "save": false,
+        "message": false,
+        "ask": false,
+        "confirm": false
       },
       "fs": {
         "all": false,
