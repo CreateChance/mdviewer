@@ -4,8 +4,10 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
+import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 import { open } from "@tauri-apps/api/shell";
+import { convertFileSrc } from "@tauri-apps/api/tauri";
 import Mermaid from "./Mermaid";
 
 const MD_EXTENSIONS = /\.(md|markdown|mdx)$/i;
@@ -111,13 +113,22 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
     h6({ children, ...props }) {
       return <h6 id={getHeadingId(children)} {...props}>{children}</h6>;
     },
+    img({ src, alt, ...props }) {
+      let resolvedSrc = src || "";
+      // Resolve relative image paths to absolute file URLs
+      if (resolvedSrc && !/^(https?:\/\/|data:)/.test(resolvedSrc) && filePath) {
+        const absPath = resolveRelativePath(filePath, resolvedSrc);
+        resolvedSrc = convertFileSrc(absPath);
+      }
+      return <img src={resolvedSrc} alt={alt} {...props} />;
+    },
   }), [filePath, onNavigate]);
 
   return (
     <article className="markdown-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
         components={components}
       >
         {content}

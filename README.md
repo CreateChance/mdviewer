@@ -2,14 +2,21 @@
 
 一个基于 Tauri + React + TypeScript 构建的极简桌面 Markdown 阅读器。
 
+<p align="center">
+  <img src="./screenshots/main.png" alt="界面预览" width="720" />
+</p>
+
 ## 功能特性
 
 - **Markdown 渲染** — 基于 react-markdown，支持 GFM（表格、任务列表、删除线等）和 Emoji
 - **目录导航** — 左侧自动生成文档目录，点击跳转，滚动时高亮当前章节，支持拖拽调整宽度
+- **文件浏览器** — 右侧文件资源管理器，递归展示目录下所有 Markdown 文件，支持打开文件或文件夹，目录变更自动刷新
 - **代码高亮** — 基于 highlight.js，自动识别语言并着色
 - **数学公式** — 基于 KaTeX，支持行内公式和块级公式
 - **Mermaid 图表** — 支持流程图、时序图、甘特图等各类图表
 - **主题切换** — 浅色 / 深色主题一键切换，自动记忆偏好
+- **文件热更新** — 外部编辑器修改文件后自动刷新预览，无需手动重新打开
+- **Markdown 链接跳转** — 点击文档内的相对路径 md 链接直接在应用内打开，外部链接跳转系统浏览器
 
 ## 技术栈
 
@@ -22,6 +29,8 @@
 | 代码高亮 | rehype-highlight + highlight.js |
 | 数学公式 | rehype-katex + KaTeX |
 | 图表 | Mermaid |
+| 文件监听 | notify + notify-debouncer-mini |
+| 目录扫描 | walkdir |
 | 包管理 | pnpm |
 
 ## 项目结构
@@ -39,10 +48,11 @@ mdviewer/
 │   ├── main.tsx                # 应用入口，引入全局样式
 │   ├── App.tsx                 # 主应用组件，文件打开 & 布局编排
 │   ├── components/
+│   │   ├── FileExplorer.tsx      # 右侧文件资源管理器（树形目录）
 │   │   ├── MarkdownRenderer.tsx  # Markdown 渲染核心（集成所有插件）
 │   │   ├── Mermaid.tsx           # Mermaid 图表渲染组件
 │   │   ├── Sidebar.tsx           # 左侧目录导航（TOC + 拖拽调宽）
-│   │   └── Toolbar.tsx           # 顶部工具栏（打开文件 & 主题切换）
+│   │   └── Toolbar.tsx           # 顶部工具栏（打开文件/文件夹 & 主题切换）
 │   ├── hooks/
 │   │   └── useTheme.ts          # 浅色/深色主题管理
 │   └── styles/
@@ -52,7 +62,7 @@ mdviewer/
     ├── tauri.conf.json         # Tauri 应用配置（窗口、权限等）
     ├── build.rs                # Tauri 构建脚本
     ├── src/
-    │   └── main.rs             # Rust 入口
+    │   └── main.rs             # Rust 入口（文件/目录监听、目录扫描）
     └── icons/                  # 应用图标资源
 ```
 

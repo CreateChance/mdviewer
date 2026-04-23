@@ -29,6 +29,10 @@
         "all": false,
         "readFile": true,
         "scope": ["**"]
+      },
+      "protocol": {
+        "asset": true,
+        "assetScope": ["**"]
       }
     },
     "windows": [
