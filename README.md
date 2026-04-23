@@ -1,142 +1,144 @@
 # MD Viewer
 
-一个基于 Tauri + React + TypeScript 构建的极简桌面 Markdown 阅读器。
+A minimal desktop Markdown reader built with Tauri + React + TypeScript.
 
 <p align="center">
-  <img src="./screenshots/main.png" alt="界面预览" width="720" />
+  <img src="./screenshots/main.png" alt="Screenshot" width="720" />
 </p>
 
-## 功能特性
+## Features
 
-- **Markdown 渲染** — 基于 react-markdown，支持 GFM（表格、任务列表、删除线等）和 Emoji
-- **目录导航** — 左侧自动生成文档目录，点击跳转，滚动时高亮当前章节，支持拖拽调整宽度
-- **文件浏览器** — 右侧文件资源管理器，递归展示目录下所有 Markdown 文件，支持打开文件或文件夹，目录变更自动刷新
-- **代码高亮** — 基于 highlight.js，自动识别语言并着色
-- **数学公式** — 基于 KaTeX，支持行内公式和块级公式
-- **Mermaid 图表** — 支持流程图、时序图、甘特图等各类图表
-- **主题切换** — 浅色 / 深色主题一键切换，自动记忆偏好
-- **文件热更新** — 外部编辑器修改文件后自动刷新预览，无需手动重新打开
-- **Markdown 链接跳转** — 点击文档内的相对路径 md 链接直接在应用内打开，外部链接跳转系统浏览器
+- **Markdown Rendering** — Powered by react-markdown with GFM support (tables, task lists, strikethrough, etc.) and Emoji
+- **Table of Contents** — Auto-generated TOC sidebar on the left with click-to-jump, scroll-aware highlighting, and drag-to-resize
+- **File Explorer** — Right-side file tree that recursively lists all Markdown files in a directory, with auto-refresh on filesystem changes
+- **Code Highlighting** — Syntax highlighting via highlight.js with automatic language detection
+- **Math Formulas** — KaTeX-based rendering for both inline and block math expressions
+- **Mermaid Diagrams** — Supports flowcharts, sequence diagrams, Gantt charts, and more
+- **Theme Switching** — Light / dark theme toggle with automatic preference persistence
+- **Live Reload** — Automatically refreshes preview when the file is modified externally
+- **Smart Link Navigation** — Relative `.md` links open within the app; external URLs open in the system browser
+- **Local Image Support** — Renders relative-path images embedded in Markdown via Tauri asset protocol
 
-## 技术栈
+## Tech Stack
 
-| 层级 | 技术 |
-|------|------|
-| 桌面框架 | [Tauri v1](https://v1.tauri.app/) |
-| 前端框架 | React 19 + TypeScript |
-| 构建工具 | Vite 7 |
+| Layer | Technology |
+|-------|------------|
+| Desktop Framework | [Tauri v1](https://v1.tauri.app/) |
+| Frontend | React 19 + TypeScript |
+| Build Tool | Vite 7 |
 | Markdown | react-markdown + remark-gfm + remark-math |
-| 代码高亮 | rehype-highlight + highlight.js |
-| 数学公式 | rehype-katex + KaTeX |
-| 图表 | Mermaid |
-| 文件监听 | notify + notify-debouncer-mini |
-| 目录扫描 | walkdir |
-| 包管理 | pnpm |
+| Code Highlighting | rehype-highlight + highlight.js |
+| Math | rehype-katex + KaTeX |
+| HTML Support | rehype-raw |
+| Diagrams | Mermaid |
+| File Watching | notify + notify-debouncer-mini |
+| Directory Scanning | walkdir |
+| Package Manager | pnpm |
 
-## 项目结构
+## Project Structure
 
 ```
 mdviewer/
-├── index.html                  # 入口 HTML
+├── index.html                    # Entry HTML
 ├── package.json
 ├── pnpm-workspace.yaml
-├── tsconfig.json               # TypeScript 配置
-├── tsconfig.node.json          # Node 端 TS 配置（Vite 用）
-├── vite.config.ts              # Vite 配置
-├── public/                     # 静态资源
-├── src/                        # 前端源码
-│   ├── main.tsx                # 应用入口，引入全局样式
-│   ├── App.tsx                 # 主应用组件，文件打开 & 布局编排
+├── tsconfig.json                 # TypeScript config
+├── tsconfig.node.json            # Node-side TS config (for Vite)
+├── vite.config.ts                # Vite config
+├── public/                       # Static assets
+├── src/                          # Frontend source
+│   ├── main.tsx                  # App entry, global style imports
+│   ├── App.tsx                   # Root component, file handling & layout
 │   ├── components/
-│   │   ├── FileExplorer.tsx      # 右侧文件资源管理器（树形目录）
-│   │   ├── MarkdownRenderer.tsx  # Markdown 渲染核心（集成所有插件）
-│   │   ├── Mermaid.tsx           # Mermaid 图表渲染组件
-│   │   ├── Sidebar.tsx           # 左侧目录导航（TOC + 拖拽调宽）
-│   │   └── Toolbar.tsx           # 顶部工具栏（打开文件/文件夹 & 主题切换）
+│   │   ├── FileExplorer.tsx      # Right-side file tree browser
+│   │   ├── MarkdownRenderer.tsx  # Markdown rendering core (all plugins)
+│   │   ├── Mermaid.tsx           # Mermaid diagram component
+│   │   ├── Sidebar.tsx           # Left-side TOC navigation (drag-to-resize)
+│   │   └── Toolbar.tsx           # Top toolbar (open file/folder & theme toggle)
 │   ├── hooks/
-│   │   └── useTheme.ts          # 浅色/深色主题管理
+│   │   └── useTheme.ts          # Light/dark theme management
 │   └── styles/
-│       └── index.css            # 全局样式 & CSS 变量主题
-└── src-tauri/                  # Tauri / Rust 后端
-    ├── Cargo.toml              # Rust 依赖配置
-    ├── tauri.conf.json         # Tauri 应用配置（窗口、权限等）
-    ├── build.rs                # Tauri 构建脚本
+│       └── index.css            # Global styles & CSS variable themes
+└── src-tauri/                   # Tauri / Rust backend
+    ├── Cargo.toml               # Rust dependencies
+    ├── tauri.conf.json          # Tauri app config (window, permissions, etc.)
+    ├── build.rs                 # Tauri build script
     ├── src/
-    │   └── main.rs             # Rust 入口（文件/目录监听、目录扫描）
-    └── icons/                  # 应用图标资源
+    │   └── main.rs              # Rust entry (file/dir watching, directory scan)
+    └── icons/                   # App icon assets
 ```
 
-## 环境要求
+## Prerequisites
 
 - [Node.js](https://nodejs.org/) >= 18
 - [pnpm](https://pnpm.io/) >= 8
 - [Rust](https://www.rust-lang.org/tools/install) >= 1.70
-- Tauri v1 系统依赖（参考 [Tauri 前置条件](https://v1.tauri.app/v1/guides/getting-started/prerequisites)）
+- Tauri v1 system dependencies (see [Tauri Prerequisites](https://v1.tauri.app/v1/guides/getting-started/prerequisites))
 
-## 开发
+## Development
 
 ```bash
-# 安装前端依赖
+# Install frontend dependencies
 pnpm install
 
-# 启动开发模式（同时启动 Vite dev server 和 Tauri 窗口）
+# Start development mode (launches Vite dev server + Tauri window)
 pnpm tauri dev
 ```
 
-开发模式下，前端代码修改会通过 Vite HMR 热更新，Rust 代码修改会自动重新编译。
+In development mode, frontend changes are hot-reloaded via Vite HMR, and Rust code changes trigger automatic recompilation.
 
-如果只需要调试前端（不启动 Tauri 窗口）：
+To debug the frontend only (without the Tauri window):
 
 ```bash
 pnpm dev
-# 浏览器访问 http://localhost:1420
+# Open http://localhost:1420 in your browser
 ```
 
-## 构建与打包
+## Build & Package
 
 ```bash
-# 构建生产版本（前端 + Rust 编译 + 打包安装程序）
+# Production build (frontend + Rust compilation + installer packaging)
 pnpm tauri build
 ```
 
-构建产物位于 `src-tauri/target/release/bundle/`，根据操作系统不同会生成：
+Build artifacts are located at `src-tauri/target/release/bundle/`:
 
-| 平台 | 产物 | 路径 |
-|------|------|------|
-| macOS | `.app` + `.dmg` | `bundle/macos/` 和 `bundle/dmg/` |
-| Windows | `.msi` + `.exe` | `bundle/msi/` 和 `bundle/nsis/` |
-| Linux | `.deb` + `.AppImage` | `bundle/deb/` 和 `bundle/appimage/` |
+| Platform | Output | Path |
+|----------|--------|------|
+| macOS | `.app` + `.dmg` | `bundle/macos/` and `bundle/dmg/` |
+| Windows | `.msi` + `.exe` | `bundle/msi/` and `bundle/nsis/` |
+| Linux | `.deb` + `.AppImage` | `bundle/deb/` and `bundle/appimage/` |
 
-### 指定目标平台
+### Cross-Compilation
 
-Tauri 默认为当前系统构建。如需交叉编译，需配置对应的 Rust target：
+Tauri builds for the current platform by default. For cross-compilation, add the corresponding Rust target:
 
 ```bash
-# 示例：macOS 上构建 Apple Silicon 版本
+# Example: Build for Apple Silicon on macOS
 rustup target add aarch64-apple-darwin
 pnpm tauri build --target aarch64-apple-darwin
 
-# 示例：macOS 上构建 Intel 版本
+# Example: Build for Intel on macOS
 rustup target add x86_64-apple-darwin
 pnpm tauri build --target x86_64-apple-darwin
 
-# 同时构建 Universal Binary（Intel + Apple Silicon）
+# Build Universal Binary (Intel + Apple Silicon)
 pnpm tauri build --target universal-apple-darwin
 ```
 
-### 自定义应用信息
+### Customization
 
-编辑 `src-tauri/tauri.conf.json` 中的以下字段：
+Edit the following fields in `src-tauri/tauri.conf.json`:
 
-- `package.productName` — 应用名称
-- `package.version` — 版本号
-- `tauri.bundle.identifier` — 应用唯一标识符（如 `com.yourname.mdviewer`）
-- `tauri.bundle.icon` — 应用图标
+- `package.productName` — Application name
+- `package.version` — Version number
+- `tauri.bundle.identifier` — Unique app identifier (e.g. `com.yourname.mdviewer`)
+- `tauri.bundle.icon` — App icons
 
-### CI/CD 自动发布
+### CI/CD
 
-可参考 Tauri 官方的 [GitHub Actions 发布指南](https://v1.tauri.app/v1/guides/building/cross-platform) 配置多平台自动构建与发布。
+Refer to the official [Tauri GitHub Actions guide](https://v1.tauri.app/v1/guides/building/cross-platform) for multi-platform automated builds and releases.
 
-## 许可证
+## License
 
 [Apache License 2.0](LICENSE)
