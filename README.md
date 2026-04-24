@@ -139,6 +139,20 @@ Edit the following fields in `src-tauri/tauri.conf.json`:
 
 Refer to the official [Tauri GitHub Actions guide](https://v1.tauri.app/v1/guides/building/cross-platform) for multi-platform automated builds and releases.
 
+## Troubleshooting
+
+### macOS: "mdviewer is damaged and can't be opened"
+
+This happens because the app is not signed with an Apple Developer certificate. macOS Gatekeeper blocks unsigned apps downloaded from the internet.
+
+To fix, run in Terminal:
+
+```bash
+/usr/bin/xattr -cr /Applications/mdviewer.app
+```
+
+Then open the app again normally.
+
 ## License
 
 [Apache License 2.0](LICENSE)
