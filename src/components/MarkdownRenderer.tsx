@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -9,6 +9,7 @@ import type { Components } from "react-markdown";
 import { open } from "@tauri-apps/api/shell";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import Mermaid from "./Mermaid";
+import ImageLightbox from "./ImageLightbox";
 
 const MD_EXTENSIONS = /\.(md|markdown|mdx)$/i;
 
@@ -54,6 +55,8 @@ function resolveRelativePath(base: string, relative: string): string {
 }
 
 export default function MarkdownRenderer({ content, filePath, onNavigate }: MarkdownRendererProps) {
+  const [lightboxSrc, setLightboxSrc] = useState<{ src: string; alt: string } | null>(null);
+
   const components = useMemo<Components>(() => ({
     a({ href, children, ...props }) {
       const handleClick = (e: React.MouseEvent) => {
@@ -115,12 +118,19 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
     },
     img({ src, alt, ...props }) {
       let resolvedSrc = src || "";
-      // Resolve relative image paths to absolute file URLs
       if (resolvedSrc && !/^(https?:\/\/|data:)/.test(resolvedSrc) && filePath) {
         const absPath = resolveRelativePath(filePath, resolvedSrc);
         resolvedSrc = convertFileSrc(absPath);
       }
-      return <img src={resolvedSrc} alt={alt} {...props} />;
+      return (
+        <img
+          src={resolvedSrc}
+          alt={alt}
+          className="md-img-zoomable"
+          onClick={() => setLightboxSrc({ src: resolvedSrc, alt: alt || "" })}
+          {...props}
+        />
+      );
     },
   }), [filePath, onNavigate]);
 
@@ -133,6 +143,13 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
       >
         {content}
       </ReactMarkdown>
+      {lightboxSrc && (
+        <ImageLightbox
+          src={lightboxSrc.src}
+          alt={lightboxSrc.alt}
+          onClose={() => setLightboxSrc(null)}
+        />
+      )}
     </article>
   );
 }
