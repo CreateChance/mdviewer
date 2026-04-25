@@ -168,6 +168,7 @@ function App() {
             collapsed={explorerCollapsed}
             onToggle={() => setExplorerCollapsed((p) => !p)}
             onSelectFile={handleExplorerSelect}
+            onResizeStateChange={setResizing}
           />
         )}
       </div>

@@ -498,8 +498,6 @@ body {
 
 /* ===== File Explorer (right panel) ===== */
 .file-explorer {
-  width: 240px;
-  min-width: 240px;
   background: var(--bg-sidebar);
   border-left: 1px solid var(--border-color);
   display: flex;
@@ -512,6 +510,27 @@ body {
 .file-explorer.collapsed {
   width: 36px !important;
   min-width: 36px !important;
+}
+.file-explorer.dragging {
+  transition: none;
+  user-select: none;
+}
+
+/* Resize handle (left edge for right-side panel) */
+.fe-resizer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+  transition: background 0.15s;
+}
+.fe-resizer:hover,
+.file-explorer.dragging .fe-resizer {
+  background: var(--accent);
+  opacity: 0.5;
 }
 
 .fe-toggle {
