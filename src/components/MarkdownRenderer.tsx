@@ -19,23 +19,52 @@ interface MarkdownRendererProps {
   onNavigate: (path: string) => void;
 }
 
-function getHeadingId(children: React.ReactNode): string {
-  const text = extractText(children);
+function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/\s+/g, "-");
+    .replace(/[\s]+/g, "-")
+    .replace(/[^\p{L}\p{N}_-]/gu, "")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
-function extractText(node: React.ReactNode): string {
-  if (typeof node === "string") return node;
-  if (typeof node === "number") return String(node);
-  if (Array.isArray(node)) return node.map(extractText).join("");
-  if (node && typeof node === "object" && "props" in node) {
-    const el = node as React.ReactElement<{ children?: React.ReactNode }>;
-    return extractText(el.props.children);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractTextFromNode(node: any): string {
+  let text = "";
+  if (node.children) {
+    for (const child of node.children) {
+      if (child.type === "text") {
+        text += child.value;
+      } else if (child.children) {
+        text += extractTextFromNode(child);
+      }
+    }
   }
-  return "";
+  return text;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function visitHeadings(node: any, idCount: Map<string, number>) {
+  if (node.type === "element" && /^h[1-6]$/.test(node.tagName)) {
+    const text = extractTextFromNode(node);
+    const base = slugify(text);
+    const count = idCount.get(base) ?? 0;
+    idCount.set(base, count + 1);
+    if (!node.properties) node.properties = {};
+    node.properties.id = count === 0 ? base : `${base}-${count}`;
+  }
+  if (node.children) {
+    for (const child of node.children) {
+      visitHeadings(child, idCount);
+    }
+  }
+}
+
+function rehypeSlugify() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (tree: any) => {
+    visitHeadings(tree, new Map());
+  };
 }
 
 function resolveRelativePath(base: string, relative: string): string {
@@ -98,24 +127,6 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
         </code>
       );
     },
-    h1({ children, ...props }) {
-      return <h1 id={getHeadingId(children)} {...props}>{children}</h1>;
-    },
-    h2({ children, ...props }) {
-      return <h2 id={getHeadingId(children)} {...props}>{children}</h2>;
-    },
-    h3({ children, ...props }) {
-      return <h3 id={getHeadingId(children)} {...props}>{children}</h3>;
-    },
-    h4({ children, ...props }) {
-      return <h4 id={getHeadingId(children)} {...props}>{children}</h4>;
-    },
-    h5({ children, ...props }) {
-      return <h5 id={getHeadingId(children)} {...props}>{children}</h5>;
-    },
-    h6({ children, ...props }) {
-      return <h6 id={getHeadingId(children)} {...props}>{children}</h6>;
-    },
     img({ src, alt, ...props }) {
       let resolvedSrc = src || "";
       if (resolvedSrc && !/^(https?:\/\/|data:)/.test(resolvedSrc) && filePath) {
@@ -138,7 +149,7 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
     <article className="markdown-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, rehypeSlugify, rehypeKatex, rehypeHighlight]}
         components={components}
       >
         {content}

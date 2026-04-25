@@ -28,6 +28,7 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
   useEffect(() => {
     const lines = markdown.split("\n");
     const items: TocItem[] = [];
+    const idCount = new Map<string, number>();
     let inCodeBlock = false;
 
     for (const line of lines) {
@@ -41,10 +42,15 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
       if (match) {
         const level = match[1].length;
         const text = match[2].replace(/[*_`~\[\]]/g, "").trim();
-        const id = text
+        const base = text
           .toLowerCase()
-          .replace(/[^\w\s-]/g, "")
-          .replace(/\s+/g, "-");
+          .replace(/[\s]+/g, "-")
+          .replace(/[^\p{L}\p{N}_-]/gu, "")
+          .replace(/-+/g, "-")
+          .replace(/^-|-$/g, "");
+        const count = idCount.get(base) ?? 0;
+        idCount.set(base, count + 1);
+        const id = count === 0 ? base : `${base}-${count}`;
         items.push({ id, text, level });
       }
     }
@@ -110,10 +116,21 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
 
   const scrollTo = useCallback((id: string) => {
     const el = document.getElementById(id);
-    if (el) {
+    if (!el) return;
+
+    // Find the actual scrollable container (.content)
+    const container = document.querySelector(".content");
+    if (container) {
+      const elTop = el.getBoundingClientRect().top;
+      const containerTop = container.getBoundingClientRect().top;
+      container.scrollTo({
+        top: container.scrollTop + (elTop - containerTop) - 16,
+        behavior: "smooth",
+      });
+    } else {
       el.scrollIntoView({ behavior: "smooth", block: "start" });
-      setActiveId(id);
     }
+    setActiveId(id);
   }, []);
 
   if (!markdown) return null;
