@@ -220,13 +220,46 @@ body {
   list-style: none;
 }
 
+.toc-tree-node {
+  list-style: none;
+}
+
+.toc-item {
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: background 0.15s;
+}
+
+.toc-toggle {
+  flex-shrink: 0;
+  width: 22px;
+  font-size: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  border-radius: 3px;
+  line-height: 1;
+  padding: 2px 0;
+}
+.toc-toggle:hover {
+  color: var(--text-primary);
+  background: var(--toc-hover-bg);
+}
+
+.toc-toggle-placeholder {
+  flex-shrink: 0;
+  width: 22px;
+}
+
 .toc-item button {
-  display: block;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   text-align: left;
   background: none;
   border: none;
-  padding: 5px 8px;
+  padding: 5px 8px 5px 4px;
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -553,6 +586,9 @@ body {
   flex-shrink: 0;
   width: 16px;
   text-align: center;
+}
+.fe-icon.fe-icon-toggle {
+  font-size: 20px;
 }
 
 .fe-dir-name {

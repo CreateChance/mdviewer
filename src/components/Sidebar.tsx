@@ -1,9 +1,13 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 
 interface TocItem {
   id: string;
   text: string;
   level: number;
+}
+
+interface TocTreeNode extends TocItem {
+  children: TocTreeNode[];
 }
 
 interface SidebarProps {
@@ -16,6 +20,81 @@ interface SidebarProps {
 const MIN_WIDTH = 180;
 const MAX_WIDTH = 480;
 const DEFAULT_WIDTH = 260;
+
+/** Convert flat heading list into a nested tree based on heading levels. */
+function buildTocTree(items: TocItem[]): TocTreeNode[] {
+  const root: TocTreeNode[] = [];
+  const stack: TocTreeNode[] = [];
+
+  for (const item of items) {
+    const node: TocTreeNode = { ...item, children: [] };
+
+    // Pop stack until we find a parent with a smaller level
+    while (stack.length > 0 && stack[stack.length - 1].level >= item.level) {
+      stack.pop();
+    }
+
+    if (stack.length === 0) {
+      root.push(node);
+    } else {
+      stack[stack.length - 1].children.push(node);
+    }
+    stack.push(node);
+  }
+
+  return root;
+}
+
+function TocTreeItem({
+  node,
+  depth,
+  activeId,
+  onScrollTo,
+}: {
+  node: TocTreeNode;
+  depth: number;
+  activeId: string;
+  onScrollTo: (id: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const hasChildren = node.children.length > 0;
+
+  return (
+    <li className="toc-tree-node">
+      <div
+        className={`toc-item ${activeId === node.id ? "active" : ""}`}
+        style={{ paddingLeft: `${depth * 14 + 8}px` }}
+      >
+        {hasChildren ? (
+          <span
+            className="toc-toggle"
+            onClick={() => setExpanded((p) => !p)}
+            role="button"
+            aria-label={expanded ? "折叠" : "展开"}
+          >
+            {expanded ? "▾" : "▸"}
+          </span>
+        ) : (
+          <span className="toc-toggle-placeholder" />
+        )}
+        <button onClick={() => onScrollTo(node.id)}>{node.text}</button>
+      </div>
+      {hasChildren && expanded && (
+        <ul className="toc-list">
+          {node.children.map((child, i) => (
+            <TocTreeItem
+              key={`${child.id}-${i}`}
+              node={child}
+              depth={depth + 1}
+              activeId={activeId}
+              onScrollTo={onScrollTo}
+            />
+          ))}
+        </ul>
+      )}
+    </li>
+  );
+}
 
 export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateChange }: SidebarProps) {
   const [toc, setToc] = useState<TocItem[]>([]);
@@ -56,6 +135,8 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
     }
     setToc(items);
   }, [markdown]);
+
+  const tocTree = useMemo(() => buildTocTree(toc), [toc]);
 
   // Track active heading via IntersectionObserver
   useEffect(() => {
@@ -118,7 +199,6 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
     const el = document.getElementById(id);
     if (!el) return;
 
-    // Find the actual scrollable container (.content)
     const container = document.querySelector(".content");
     if (container) {
       const elTop = el.getBoundingClientRect().top;
@@ -135,8 +215,6 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
 
   if (!markdown) return null;
 
-  const minLevel = toc.length > 0 ? Math.min(...toc.map((t) => t.level)) : 1;
-
   return (
     <aside
       ref={sidebarRef}
@@ -151,14 +229,14 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
           <nav className="toc">
             <h3 className="toc-title">目录</h3>
             <ul className="toc-list">
-              {toc.map((item, i) => (
-                <li
-                  key={`${item.id}-${i}`}
-                  className={`toc-item ${activeId === item.id ? "active" : ""}`}
-                  style={{ paddingLeft: `${(item.level - minLevel) * 14 + 8}px` }}
-                >
-                  <button onClick={() => scrollTo(item.id)}>{item.text}</button>
-                </li>
+              {tocTree.map((node, i) => (
+                <TocTreeItem
+                  key={`${node.id}-${i}`}
+                  node={node}
+                  depth={0}
+                  activeId={activeId}
+                  onScrollTo={scrollTo}
+                />
               ))}
             </ul>
           </nav>

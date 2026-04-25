@@ -77,7 +77,7 @@ function TreeItem({
           style={{ paddingLeft: `${depth * 14 + 8}px` }}
           onClick={() => setExpanded((p) => !p)}
         >
-          <span className="fe-icon">{expanded ? "▾" : "▸"}</span>
+          <span className="fe-icon fe-icon-toggle">{expanded ? "▾" : "▸"}</span>
           <span className="fe-dir-name">{node.name}</span>
         </button>
         {expanded && (
