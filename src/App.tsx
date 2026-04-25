@@ -8,6 +8,7 @@ import Toolbar from "./components/Toolbar";
 import Sidebar from "./components/Sidebar";
 import MarkdownRenderer from "./components/MarkdownRenderer";
 import FileExplorer from "./components/FileExplorer";
+import SearchBar from "./components/SearchBar";
 
 function getDir(filePath: string): string {
   const sep = filePath.includes("\\") ? "\\" : "/";
@@ -142,11 +143,17 @@ function App() {
         )}
         <main className="content">
           {markdown ? (
-            <MarkdownRenderer
-              content={markdown}
-              filePath={filePath}
-              onNavigate={openFilePath}
-            />
+            <>
+              <MarkdownRenderer
+                content={markdown}
+                filePath={filePath}
+                onNavigate={openFilePath}
+              />
+              <SearchBar
+                containerSelector=".content"
+                contentSelector=".markdown-body"
+              />
+            </>
           ) : (
             <div className="welcome">
               <div className="welcome-icon">📄</div>
