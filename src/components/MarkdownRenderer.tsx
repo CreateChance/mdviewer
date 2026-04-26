@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -137,6 +137,17 @@ function preprocessAlerts(md: string): string {
   return out.join("\n");
 }
 
+/* ── Extract plain text from React children (handles rehype-highlight spans) ── */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractText(node: any): string {
+  if (node == null) return "";
+  if (typeof node === "string") return node;
+  if (typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(extractText).join("");
+  if (node.props?.children) return extractText(node.props.children);
+  return "";
+}
+
 /* ── CodeBlock with copy / expand / collapse ── */
 function CodeBlock({
   lang,
@@ -152,6 +163,15 @@ function CodeBlock({
   const [collapsed, setCollapsed] = useState(false);
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setExpanded(false);
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [expanded]);
 
   const handleCopy = () => {
     onCopy(codeText);
@@ -260,12 +280,9 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
     },
     pre({ children, ...props }) {
       // Extract code text for copy button
-      let codeText = "";
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const child = (children as any);
-      if (child?.props?.children) {
-        codeText = String(child.props.children).replace(/\n$/, "");
-      }
+      const codeText = extractText(child?.props?.children).replace(/\n$/, "");
       // Extract language label
       let lang = "";
       if (child?.props?.className) {
