@@ -6,11 +6,32 @@ interface ImageLightboxProps {
   onClose: () => void;
 }
 
+/** Padding (px) reserved for toolbar / edges when computing fit scale */
+const PADDING = 80;
+
 export default function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
+  const [fitScale, setFitScale] = useState(1);
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  /** Compute scale so the image fills the viewport (contain-fit) */
+  const computeFitScale = useCallback(() => {
+    const img = imgRef.current;
+    if (!img || !img.naturalWidth) return;
+    const vw = window.innerWidth - PADDING * 2;
+    const vh = window.innerHeight - PADDING * 2;
+    const s = Math.min(vw / img.naturalWidth, vh / img.naturalHeight);
+    setFitScale(s);
+    setScale(s);
+  }, []);
+
+  const resetView = useCallback(() => {
+    setScale(fitScale);
+    setTranslate({ x: 0, y: 0 });
+  }, [fitScale]);
 
   const onWheel = useCallback((e: React.WheelEvent) => {
     setTranslate((prev) => ({
@@ -58,13 +79,15 @@ export default function ImageLightbox({ src, alt, onClose }: ImageLightboxProps)
         <button onClick={() => setScale((s) => Math.min(5, s + 0.25))}>＋</button>
         <span className="img-lightbox-scale">{Math.round(scale * 100)}%</span>
         <button onClick={() => setScale((s) => Math.max(0.2, s - 0.25))}>－</button>
-        <button onClick={() => { setScale(1); setTranslate({ x: 0, y: 0 }); }}>Reset</button>
+        <button onClick={resetView}>Reset</button>
         <button onClick={onClose}>✕</button>
       </div>
       <img
+        ref={imgRef}
         className="img-lightbox-content"
         src={src}
         alt={alt}
+        onLoad={computeFitScale}
         style={{
           transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
         }}

@@ -3,15 +3,20 @@ import mermaid from "mermaid";
 
 let mermaidId = 0;
 
+/** Padding (px) reserved for toolbar / edges when computing fit scale */
+const PADDING = 80;
+
 interface MermaidProps {
   chart: string;
 }
 
 export default function Mermaid({ chart }: MermaidProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const overlayContentRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState("");
   const idRef = useRef(`mermaid-${++mermaidId}`);
   const [fullscreen, setFullscreen] = useState(false);
+  const [fitScale, setFitScale] = useState(1);
   const [scale, setScale] = useState(1);
   const [translate, setTranslate] = useState({ x: 0, y: 0 });
   const dragging = useRef(false);
@@ -40,15 +45,40 @@ export default function Mermaid({ chart }: MermaidProps) {
     return () => { cancelled = true; };
   }, [chart]);
 
+  /** Compute fit scale after overlay mounts */
+  useEffect(() => {
+    if (!fullscreen) return;
+    // Wait a frame so the overlay content is rendered and measurable
+    requestAnimationFrame(() => {
+      const el = overlayContentRef.current;
+      if (!el) return;
+      const svgEl = el.querySelector("svg");
+      if (!svgEl) return;
+      const svgW = svgEl.getBoundingClientRect().width;
+      const svgH = svgEl.getBoundingClientRect().height;
+      if (!svgW || !svgH) return;
+      const vw = window.innerWidth - PADDING * 2;
+      const vh = window.innerHeight - PADDING * 2;
+      const s = Math.min(vw / svgW, vh / svgH, 3);
+      setFitScale(s);
+      setScale(s);
+    });
+  }, [fullscreen]);
+
   const openFullscreen = useCallback(() => {
     setFullscreen(true);
-    setScale(1);
+    setScale(1); // temporary, will be overridden by the effect above
     setTranslate({ x: 0, y: 0 });
   }, []);
 
   const closeFullscreen = useCallback(() => {
     setFullscreen(false);
   }, []);
+
+  const resetView = useCallback(() => {
+    setScale(fitScale);
+    setTranslate({ x: 0, y: 0 });
+  }, [fitScale]);
 
   const onWheel = useCallback((e: React.WheelEvent) => {
     setTranslate((prev) => ({
@@ -110,10 +140,11 @@ export default function Mermaid({ chart }: MermaidProps) {
             <button onClick={() => setScale((s) => Math.min(5, s + 0.25))}>＋</button>
             <span className="mermaid-overlay-scale">{Math.round(scale * 100)}%</span>
             <button onClick={() => setScale((s) => Math.max(0.2, s - 0.25))}>－</button>
-            <button onClick={() => { setScale(1); setTranslate({ x: 0, y: 0 }); }}>Reset</button>
+            <button onClick={resetView}>Reset</button>
             <button onClick={closeFullscreen}>✕</button>
           </div>
           <div
+            ref={overlayContentRef}
             className="mermaid-overlay-content"
             style={{
               transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,

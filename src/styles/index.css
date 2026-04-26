@@ -1047,9 +1047,6 @@ body {
 }
 
 .img-lightbox-content {
-  max-width: 90vw;
-  max-height: 85vh;
-  object-fit: contain;
   transform-origin: center center;
   pointer-events: none;
   border-radius: 4px;
