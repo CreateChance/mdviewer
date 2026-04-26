@@ -664,11 +664,11 @@ body {
   vertical-align: top;
 }
 .markdown-body th {
-  background: var(--table-header-bg);
+  background: var(--accent);
   font-weight: 600;
   font-size: 13px;
   text-transform: none;
-  color: var(--text-primary);
+  color: #fff;
 }
 .markdown-body tbody tr:nth-child(even) {
   background: var(--table-stripe);
