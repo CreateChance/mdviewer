@@ -69,6 +69,41 @@ function rehypeSlugify() {
   };
 }
 
+/**
+ * Rehype plugin: strip hljs class and flatten spans for code blocks
+ * that have no language specified (only have "hljs" class, no "language-*").
+ */
+function rehypeStripNoLang() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function flattenToText(node: any): string {
+    if (node.type === "text") return node.value || "";
+    if (node.children) return node.children.map(flattenToText).join("");
+    return "";
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function visit(node: any) {
+    if (
+      node.type === "element" &&
+      node.tagName === "code" &&
+      node.properties?.className
+    ) {
+      const classes: string[] = node.properties.className;
+      const hasLang = classes.some((c: string) => c.startsWith("language-"));
+      if (!hasLang) {
+        // Strip all classes and flatten children to plain text
+        delete node.properties.className;
+        const text = flattenToText(node);
+        node.children = [{ type: "text", value: text }];
+      }
+    }
+    if (node.children) {
+      for (const child of node.children) visit(child);
+    }
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (tree: any) => visit(tree);
+}
+
 function resolveRelativePath(base: string, relative: string): string {
   const sep = base.includes("\\") ? "\\" : "/";
   const dir = base.substring(0, base.lastIndexOf(sep));
@@ -259,16 +294,22 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
       };
       return <a href={href} onClick={handleClick} {...props}>{children}</a>;
     },
-    code({ className, children, ...props }) {
+    code({ className, children, node, ...props }) {
       const match = /language-(\w+)/.exec(className || "");
       const lang = match?.[1];
-      const codeStr = String(children).replace(/\n$/, "");
 
       if (lang === "mermaid") {
+        const codeStr = String(children).replace(/\n$/, "");
         return <Mermaid chart={codeStr} />;
       }
 
-      if (!className) {
+      // No language specified
+      if (!lang) {
+        // Check if inside <pre> (block code) — don't add inline-code class
+        const isBlock = node?.position && String(children).includes("\n");
+        if (isBlock) {
+          return <code {...props}>{children}</code>;
+        }
         return <code className="inline-code" {...props}>{children}</code>;
       }
 
@@ -321,7 +362,7 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
     <article className="markdown-body">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkGemoji, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeSlugify, rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeRaw, rehypeSlugify, rehypeKatex, [rehypeHighlight, { detect: false }], rehypeStripNoLang]}
         components={components}
       >
         {processedContent}

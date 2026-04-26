@@ -23,21 +23,16 @@
 
 行内代码：使用 `npm install` 安装依赖，然后运行 `npm run dev` 启动开发服务器。
 
-```typescript
-interface MarkdownRendererProps {
-  content: string;
-  filePath: string;
-  onNavigate: (path: string) => void;
-}
+```
+没有样式
+没有样式
+没有样式
+没有样式
+没有样式
+```
 
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[\s]+/g, "-")
-    .replace(/[^\p{L}\p{N}_-]/gu, "")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+
+```typescript
 interface MarkdownRendererProps {
   content: string;
   filePath: string;
