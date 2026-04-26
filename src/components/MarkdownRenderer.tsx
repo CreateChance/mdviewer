@@ -19,6 +19,7 @@ interface MarkdownRendererProps {
   content: string;
   filePath: string;
   onNavigate: (path: string) => void;
+  onHoverLink?: (href: string) => void;
 }
 
 function slugify(text: string): string {
@@ -265,7 +266,7 @@ function CodeBlock({
   );
 }
 
-export default function MarkdownRenderer({ content, filePath, onNavigate }: MarkdownRendererProps) {
+export default function MarkdownRenderer({ content, filePath, onNavigate, onHoverLink }: MarkdownRendererProps) {
   const [lightboxSrc, setLightboxSrc] = useState<{ src: string; alt: string } | null>(null);
 
   const processedContent = useMemo(() => preprocessAlerts(content), [content]);
@@ -292,7 +293,7 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
           onNavigate(resolved);
         }
       };
-      return <a href={href} onClick={handleClick} {...props}>{children}</a>;
+      return <a href={href} onClick={handleClick} onMouseEnter={() => onHoverLink?.(href || "")} onMouseLeave={() => onHoverLink?.("")} {...props}>{children}</a>;
     },
     code({ className, children, node, ...props }) {
       const match = /language-(\w+)/.exec(className || "");
@@ -356,7 +357,7 @@ export default function MarkdownRenderer({ content, filePath, onNavigate }: Mark
         />
       );
     },
-  }), [filePath, onNavigate, handleCopy]);
+  }), [filePath, onNavigate, handleCopy, onHoverLink]);
 
   return (
     <article className="markdown-body">

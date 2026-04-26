@@ -121,6 +121,8 @@ function App() {
     await openFilePath(path);
   }, [openFilePath]);
 
+  const [hoveredLink, setHoveredLink] = useState("");
+
   const hasExplorer = explorerFiles.length > 0;
 
   return (
@@ -148,6 +150,7 @@ function App() {
                 content={markdown}
                 filePath={filePath}
                 onNavigate={openFilePath}
+                onHoverLink={setHoveredLink}
               />
               <SearchBar
                 containerSelector=".content"
@@ -179,6 +182,9 @@ function App() {
           />
         )}
       </div>
+      {hoveredLink && (
+        <div className="link-status-bar">{hoveredLink}</div>
+      )}
     </div>
   );
 }
