@@ -432,8 +432,32 @@ body {
 
 /* Checkbox (GFM task list) */
 .markdown-body input[type="checkbox"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 3px;
   margin-right: 6px;
-  accent-color: var(--accent);
+  vertical-align: middle;
+  position: relative;
+  cursor: default;
+  background: var(--bg-primary);
+}
+.markdown-body input[type="checkbox"]:checked {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+.markdown-body input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
 }
 
 .markdown-body hr {
