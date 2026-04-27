@@ -1,10 +1,27 @@
 # MD Viewer
 
-A minimal desktop Markdown reader built with Tauri + React + TypeScript.
+A lightweight, fast desktop Markdown reader built with Tauri + React + TypeScript. Supports GFM, code highlighting, math formulas, Mermaid diagrams, live reload, and more — all in a clean, native experience across macOS, Windows, and Linux.
 
 <p align="center">
   <img src="./screenshots/main.png" alt="Screenshot" width="720" />
 </p>
+
+## Downloads
+
+You can download the latest release from the [GitHub Releases](https://github.com/CreateChance/mdviewer/releases) page.
+
+| Platform | File |
+|----------|------|
+| macOS (Apple Silicon) | `mdviewer_x.x.x_aarch64.dmg` |
+| macOS (Intel) | `mdviewer_x.x.x_x64.dmg` |
+| Windows (x64) | `mdviewer_x.x.x_x64-setup.exe` / `mdviewer_x.x.x_x64_en-US.msi` |
+| Linux (Debian/Ubuntu) | `mdviewer_x.x.x_amd64.deb` |
+| Linux (AppImage) | `mdviewer_x.x.x_amd64.AppImage` |
+
+> **macOS 用户提示：** 如果打开时提示 "mdviewer is damaged and can't be opened"，请在终端中运行：
+> ```bash
+> /usr/bin/xattr -cr /Applications/mdviewer.app
+> ```
 
 ## Features
 
@@ -138,20 +155,6 @@ Edit the following fields in `src-tauri/tauri.conf.json`:
 ### CI/CD
 
 Refer to the official [Tauri GitHub Actions guide](https://v1.tauri.app/v1/guides/building/cross-platform) for multi-platform automated builds and releases.
-
-## Troubleshooting
-
-### macOS: "mdviewer is damaged and can't be opened"
-
-This happens because the app is not signed with an Apple Developer certificate. macOS Gatekeeper blocks unsigned apps downloaded from the internet.
-
-To fix, run in Terminal:
-
-```bash
-/usr/bin/xattr -cr /Applications/mdviewer.app
-```
-
-Then open the app again normally.
 
 ## License
 
