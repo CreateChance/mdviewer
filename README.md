@@ -18,7 +18,7 @@ You can download the latest release from the [GitHub Releases](https://github.co
 | Linux (Debian/Ubuntu) | `mdviewer_x.x.x_amd64.deb` |
 | Linux (AppImage) | `mdviewer_x.x.x_amd64.AppImage` |
 
-> **macOS 用户提示：** 如果打开时提示 "mdviewer is damaged and can't be opened"，请在终端中运行：
+> **macOS users:** If you see "mdviewer is damaged and can't be opened", run the following command in Terminal:
 > ```bash
 > /usr/bin/xattr -cr /Applications/mdviewer.app
 > ```
