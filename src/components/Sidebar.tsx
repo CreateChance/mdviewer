@@ -120,7 +120,7 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
       const match = line.match(/^(#{1,6})\s+(.+)$/);
       if (match) {
         const level = match[1].length;
-        const text = match[2].replace(/[*_`~\[\]]/g, "").trim();
+        const text = match[2].replace(/[*`~\[\]]/g, "").trim();
         const base = text
           .toLowerCase()
           .replace(/[\s]+/g, "-")

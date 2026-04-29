@@ -2,6 +2,12 @@
 
 这是一个展示 Microsoft Learn 风格 Markdown 渲染效果的测试文档。
 
+## 3. `inchat_` Action
+
+### 3.1 inchat_temptext — 模板文本
+啊设计的发挥空间啊书法家卡手机费
+### 3.2 inchat_temptextwww — 模板文本
+
 ## 提示框 (Alerts)
 
 > [!NOTE]
