@@ -138,11 +138,17 @@ body {
   overflow: hidden;
 }
 
-/* ===== Floating Theme Toggle Button ===== */
-.theme-fab {
+/* ===== Floating Action Buttons ===== */
+.fab-group {
   position: fixed;
   bottom: 36px;
   right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 300;
+}
+.fab {
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -157,15 +163,14 @@ body {
   justify-content: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: background 0.15s, box-shadow 0.15s, transform 0.15s;
-  z-index: 300;
   user-select: none;
 }
-.theme-fab:hover {
+.fab:hover {
   background: var(--toc-hover-bg);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
   transform: scale(1.08);
 }
-.theme-fab:active {
+.fab:active {
   transform: scale(0.95);
 }
 
@@ -359,6 +364,18 @@ body {
   line-height: 1.8;
   color: var(--text-primary);
   word-wrap: break-word;
+  transition: max-width 0.3s ease;
+}
+
+/* Content width variants */
+.content[data-width="compact"] .markdown-body {
+  max-width: 820px;
+}
+.content[data-width="standard"] .markdown-body {
+  max-width: 1080px;
+}
+.content[data-width="wide"] .markdown-body {
+  max-width: none;
 }
 
 /* ── Headings (Microsoft Learn style: no bottom borders, clean spacing) ── */

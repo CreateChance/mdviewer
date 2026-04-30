@@ -4,6 +4,7 @@ import { readTextFile } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { useTheme } from "./hooks/useTheme";
+import { useContentWidth } from "./hooks/useContentWidth";
 import Sidebar from "./components/Sidebar";
 import MarkdownRenderer from "./components/MarkdownRenderer";
 import FileExplorer from "./components/FileExplorer";
@@ -16,6 +17,7 @@ function getDir(filePath: string): string {
 
 function App() {
   const { theme, toggleTheme } = useTheme();
+  const { contentWidth, cycleWidth, label: widthLabel, icon: widthIcon } = useContentWidth();
   const [markdown, setMarkdown] = useState("");
   const [filePath, setFilePath] = useState("");
   const [explorerRoot, setExplorerRoot] = useState("");
@@ -145,7 +147,7 @@ function App() {
             onResizeStateChange={setResizing}
           />
         )}
-        <main className="content">
+        <main className="content" data-width={contentWidth}>
           {markdown ? (
             <>
               <MarkdownRenderer
@@ -185,15 +187,25 @@ function App() {
         )}
       </div>
 
-      {/* Floating theme toggle button */}
-      <button
-        className="theme-fab"
-        onClick={toggleTheme}
-        title="切换主题"
-        aria-label={theme === "light" ? "切换到深色模式" : "切换到浅色模式"}
-      >
-        {theme === "light" ? "🌙" : "☀️"}
-      </button>
+      {/* Floating action buttons */}
+      <div className="fab-group">
+        <button
+          className="fab"
+          onClick={cycleWidth}
+          title={`阅读宽度: ${widthLabel}`}
+          aria-label={`切换阅读宽度，当前: ${widthLabel}`}
+        >
+          {widthIcon}
+        </button>
+        <button
+          className="fab"
+          onClick={toggleTheme}
+          title="切换主题"
+          aria-label={theme === "light" ? "切换到深色模式" : "切换到浅色模式"}
+        >
+          {theme === "light" ? "🌙" : "☀️"}
+        </button>
+      </div>
 
       {hoveredLink && (
         <div className="link-status-bar">{hoveredLink}</div>
