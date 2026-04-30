@@ -4,7 +4,6 @@ import { readTextFile } from "@tauri-apps/api/fs";
 import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import { useTheme } from "./hooks/useTheme";
-import Toolbar from "./components/Toolbar";
 import Sidebar from "./components/Sidebar";
 import MarkdownRenderer from "./components/MarkdownRenderer";
 import FileExplorer from "./components/FileExplorer";
@@ -19,7 +18,6 @@ function App() {
   const { theme, toggleTheme } = useTheme();
   const [markdown, setMarkdown] = useState("");
   const [filePath, setFilePath] = useState("");
-  const [fileName, setFileName] = useState("");
   const [explorerRoot, setExplorerRoot] = useState("");
   const [explorerFiles, setExplorerFiles] = useState<string[]>([]);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -48,8 +46,6 @@ function App() {
       const content = await readTextFile(path);
       setMarkdown(content);
       setFilePath(path);
-      const name = path.split(/[/\\]/).pop() || path;
-      setFileName(name);
       await invoke("watch_file", { path });
     } catch (err) {
       console.error("Failed to open file:", err);
@@ -110,12 +106,25 @@ function App() {
         // Clear current file view when opening a new folder
         setMarkdown("");
         setFilePath("");
-        setFileName("");
       }
     } catch (err) {
       console.error("Failed to open folder:", err);
     }
   }, [scanDir]);
+
+  // Listen for menu events from Tauri native menu
+  useEffect(() => {
+    const unlistenFile = listen("menu-open-file", () => {
+      openFileDialog();
+    });
+    const unlistenFolder = listen("menu-open-folder", () => {
+      openFolderDialog();
+    });
+    return () => {
+      unlistenFile.then((fn) => fn());
+      unlistenFolder.then((fn) => fn());
+    };
+  }, [openFileDialog, openFolderDialog]);
 
   const handleExplorerSelect = useCallback(async (path: string) => {
     await openFilePath(path);
@@ -127,13 +136,6 @@ function App() {
 
   return (
     <div className={`app-layout ${resizing ? "resizing" : ""}`}>
-      <Toolbar
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onOpenFile={openFileDialog}
-        onOpenFolder={openFolderDialog}
-        fileName={fileName}
-      />
       <div className="app-body">
         {markdown && (
           <Sidebar
@@ -182,6 +184,17 @@ function App() {
           />
         )}
       </div>
+
+      {/* Floating theme toggle button */}
+      <button
+        className="theme-fab"
+        onClick={toggleTheme}
+        title="切换主题"
+        aria-label={theme === "light" ? "切换到深色模式" : "切换到浅色模式"}
+      >
+        {theme === "light" ? "🌙" : "☀️"}
+      </button>
+
       {hoveredLink && (
         <div className="link-status-bar">{hoveredLink}</div>
       )}

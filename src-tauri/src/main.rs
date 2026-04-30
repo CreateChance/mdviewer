@@ -5,7 +5,9 @@ use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
-use tauri::{AppHandle, Manager, State};
+use tauri::{
+    AppHandle, CustomMenuItem, Manager, Menu, MenuItem, State, Submenu,
+};
 use walkdir::WalkDir;
 
 struct FileWatcherState {
@@ -133,8 +135,83 @@ fn scan_md_files(dir: String) -> Result<Vec<String>, String> {
     Ok(files)
 }
 
+fn build_menu() -> Menu {
+    // File submenu
+    let open_file = CustomMenuItem::new("open_file", "Open File")
+        .accelerator("CmdOrCtrl+O");
+    let open_folder = CustomMenuItem::new("open_folder", "Open Folder")
+        .accelerator("CmdOrCtrl+Shift+O");
+
+    let file_submenu = Submenu::new(
+        "File",
+        Menu::new()
+            .add_item(open_file)
+            .add_item(open_folder)
+            .add_native_item(MenuItem::Separator)
+            .add_native_item(MenuItem::CloseWindow),
+    );
+
+    // On macOS, include the app menu for standard behavior
+    #[cfg(target_os = "macos")]
+    {
+        let app_menu = Submenu::new(
+            "MD Viewer",
+            Menu::new()
+                .add_native_item(MenuItem::About(
+                    "MD Viewer".to_string(),
+                    Default::default(),
+                ))
+                .add_native_item(MenuItem::Separator)
+                .add_native_item(MenuItem::Hide)
+                .add_native_item(MenuItem::HideOthers)
+                .add_native_item(MenuItem::ShowAll)
+                .add_native_item(MenuItem::Separator)
+                .add_native_item(MenuItem::Quit),
+        );
+
+        let edit_menu = Submenu::new(
+            "Edit",
+            Menu::new()
+                .add_native_item(MenuItem::Copy)
+                .add_native_item(MenuItem::SelectAll),
+        );
+
+        Menu::new()
+            .add_submenu(app_menu)
+            .add_submenu(file_submenu)
+            .add_submenu(edit_menu)
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let edit_menu = Submenu::new(
+            "Edit",
+            Menu::new()
+                .add_native_item(MenuItem::Copy)
+                .add_native_item(MenuItem::SelectAll),
+        );
+
+        Menu::new()
+            .add_submenu(file_submenu)
+            .add_submenu(edit_menu)
+    }
+}
+
 fn main() {
     tauri::Builder::default()
+        .menu(build_menu())
+        .on_menu_event(|event| {
+            let window = event.window();
+            match event.menu_item_id() {
+                "open_file" => {
+                    let _ = window.emit("menu-open-file", ());
+                }
+                "open_folder" => {
+                    let _ = window.emit("menu-open-folder", ());
+                }
+                _ => {}
+            }
+        })
         .manage(Mutex::new(FileWatcherState {
             handle: None,
             path: None,
