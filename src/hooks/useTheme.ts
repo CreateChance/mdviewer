@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { invoke } from "@tauri-apps/api/tauri";
 
 type Theme = "light" | "dark";
 
@@ -14,6 +15,11 @@ export function useTheme() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("md-viewer-theme", theme);
+
+    // Sync native window titlebar theme via tauri-plugin-theme
+    invoke("plugin:theme|set_theme", { theme }).catch(() => {
+      // Ignore errors (e.g. when running in browser dev mode)
+    });
   }, [theme]);
 
   const toggleTheme = useCallback(() => {

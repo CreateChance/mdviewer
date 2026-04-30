@@ -198,7 +198,9 @@ fn build_menu() -> Menu {
 }
 
 fn main() {
+    let mut ctx = tauri::generate_context!();
     tauri::Builder::default()
+        .plugin(tauri_plugin_theme::init(ctx.config_mut()))
         .menu(build_menu())
         .on_menu_event(|event| {
             let window = event.window();
@@ -226,6 +228,6 @@ fn main() {
             watch_dir,
             scan_md_files
         ])
-        .run(tauri::generate_context!())
+        .run(ctx)
         .expect("error while running tauri application");
 }
