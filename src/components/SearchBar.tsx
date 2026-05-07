@@ -157,12 +157,23 @@ export default function SearchBar({ containerSelector, contentSelector }: Search
   }, [matches.length, currentIdx, scrollToMatch]);
 
   const close = useCallback(() => {
+    // Save scroll position and blur input before unmounting to prevent
+    // the browser from auto-scrolling when the focused element is removed.
+    const container = document.querySelector(containerSelector);
+    const scrollTop = container?.scrollTop ?? 0;
+    inputRef.current?.blur();
     setVisible(false);
     setQuery("");
     setMatches([]);
     setCurrentIdx(-1);
     clearHighlights();
-  }, [clearHighlights]);
+    // Restore scroll position after React removes the search bar from DOM
+    requestAnimationFrame(() => {
+      if (container) {
+        container.scrollTop = scrollTop;
+      }
+    });
+  }, [clearHighlights, containerSelector]);
 
   // Keyboard shortcuts
   useEffect(() => {
