@@ -169,11 +169,22 @@ export default function SearchBar({ containerSelector, contentSelector }: Search
     const onKeyDown = (e: KeyboardEvent) => {
       const mod = e.metaKey || e.ctrlKey;
 
-      // Cmd/Ctrl+F → open search
+      // Cmd/Ctrl+F → open search (with optional selected text)
       if (mod && e.key === "f") {
         e.preventDefault();
+        const selectedText = window.getSelection()?.toString().trim() ?? "";
         setVisible(true);
-        requestAnimationFrame(() => inputRef.current?.focus());
+        if (selectedText) {
+          setQuery(selectedText);
+          // Delay search to next frame so state is updated and input is mounted
+          requestAnimationFrame(() => {
+            inputRef.current?.focus();
+            inputRef.current?.select();
+            doSearch(selectedText);
+          });
+        } else {
+          requestAnimationFrame(() => inputRef.current?.focus());
+        }
         return;
       }
 
@@ -196,7 +207,7 @@ export default function SearchBar({ containerSelector, contentSelector }: Search
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [visible, close, goNext, goPrev]);
+  }, [visible, close, goNext, goPrev, doSearch]);
 
   if (!visible) return null;
 
