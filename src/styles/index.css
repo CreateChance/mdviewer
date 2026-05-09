@@ -112,6 +112,7 @@ body {
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: var(--scrollbar-track);
@@ -575,7 +576,7 @@ body {
 }
 .markdown-body .code-block-wrapper.code-expanded .code-block-body::-webkit-scrollbar {
   width: 10px;
-  height: 10px;
+  height: 6px;
 }
 .markdown-body .code-block-wrapper.code-expanded .code-block-body::-webkit-scrollbar-track {
   background: transparent;
