@@ -5,6 +5,8 @@ interface SearchBarProps {
   containerSelector: string;
   /** The content root to search text in */
   contentSelector: string;
+  /** Current file path – when it changes the search bar auto-closes */
+  filePath?: string;
 }
 
 /** Find all text match ranges inside a container element. */
@@ -35,7 +37,7 @@ function findMatches(root: Element, query: string): Range[] {
 const HIGHLIGHT_CLASS = "search-highlight";
 const HIGHLIGHT_ACTIVE_CLASS = "search-highlight-active";
 
-export default function SearchBar({ containerSelector, contentSelector }: SearchBarProps) {
+export default function SearchBar({ containerSelector, contentSelector, filePath }: SearchBarProps) {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<Range[]>([]);
@@ -141,6 +143,18 @@ export default function SearchBar({ containerSelector, contentSelector }: Search
       setCurrentIdx(-1);
     }
   }, [visible, clearHighlights]);
+
+  // Close search bar when switching documents
+  useEffect(() => {
+    if (visible) {
+      setVisible(false);
+      setQuery("");
+      setMatches([]);
+      setCurrentIdx(-1);
+      clearHighlights();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filePath]);
 
   const goNext = useCallback(() => {
     if (matches.length === 0) return;

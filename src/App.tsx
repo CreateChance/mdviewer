@@ -159,6 +159,7 @@ function App() {
               <SearchBar
                 containerSelector=".content"
                 contentSelector=".markdown-body"
+                filePath={filePath}
               />
             </>
           ) : (
