@@ -42,6 +42,7 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
   const [query, setQuery] = useState("");
   const [matches, setMatches] = useState<Range[]>([]);
   const [currentIdx, setCurrentIdx] = useState(-1);
+  const [searchedQuery, setSearchedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const marksRef = useRef<HTMLElement[]>([]);
 
@@ -106,11 +107,13 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
     if (!content || !searchQuery) {
       setMatches([]);
       setCurrentIdx(-1);
+      setSearchedQuery("");
       clearHighlights();
       return;
     }
 
     clearHighlights();
+    setSearchedQuery(searchQuery);
 
     const found = findMatches(content, searchQuery);
     setMatches(found);
@@ -178,6 +181,7 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
     inputRef.current?.blur();
     setVisible(false);
     setQuery("");
+    setSearchedQuery("");
     setMatches([]);
     setCurrentIdx(-1);
     clearHighlights();
@@ -248,9 +252,9 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            if (matches.length > 0 && !e.shiftKey) {
+            if (query === searchedQuery && matches.length > 0 && !e.shiftKey) {
               goNext();
-            } else if (matches.length > 0 && e.shiftKey) {
+            } else if (query === searchedQuery && matches.length > 0 && e.shiftKey) {
               goPrev();
             } else {
               doSearch(query);
