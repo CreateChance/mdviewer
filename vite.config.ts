@@ -18,4 +18,18 @@ export default defineConfig(async () => ({
       ignored: ["**/src-tauri/**"],
     },
   },
+  build: {
+    // Split large dependencies into separate chunks for better caching and lazy loading
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom"],
+          "vendor-markdown": ["react-markdown", "remark-gfm", "remark-gemoji", "remark-math", "rehype-raw", "rehype-katex", "katex"],
+          "vendor-highlight": ["highlight.js", "rehype-highlight"],
+        },
+      },
+    },
+    // Reduce chunk size warnings threshold
+    chunkSizeWarningLimit: 600,
+  },
 }));

@@ -23,3 +23,15 @@ tauri-plugin-theme = "1.0.0"
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
 custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+# Optimize for size to reduce memory footprint
+opt-level = "s"
+# Enable LTO for better dead code elimination and smaller binary
+lto = true
+# Single codegen unit for maximum optimization
+codegen-units = 1
+# Strip debug symbols
+strip = true
+# Abort on panic to avoid unwinding overhead
+panic = "abort"

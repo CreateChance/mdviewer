@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, lazy, Suspense } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -10,8 +10,9 @@ import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
 import { open } from "@tauri-apps/api/shell";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
-import Mermaid from "./Mermaid";
 import ImageLightbox from "./ImageLightbox";
+
+const Mermaid = lazy(() => import("./Mermaid"));
 
 const MD_EXTENSIONS = /\.(md|markdown|mdx)$/i;
 
@@ -301,7 +302,7 @@ export default function MarkdownRenderer({ content, filePath, onNavigate, onHove
 
       if (lang === "mermaid") {
         const codeStr = String(children).replace(/\n$/, "");
-        return <Mermaid chart={codeStr} />;
+        return <Suspense fallback={<pre>Loading diagram...</pre>}><Mermaid chart={codeStr} /></Suspense>;
       }
 
       // No language specified

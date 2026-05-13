@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import mermaid from "mermaid";
 
 let mermaidId = 0;
+let mermaidInstance: typeof import("mermaid").default | null = null;
+
+async function getMermaid() {
+  if (!mermaidInstance) {
+    const mod = await import("mermaid");
+    mermaidInstance = mod.default;
+  }
+  return mermaidInstance;
+}
 
 /** Padding (px) reserved for toolbar / edges when computing fit scale */
 const PADDING = 80;
@@ -25,18 +33,20 @@ export default function Mermaid({ chart }: MermaidProps) {
   useEffect(() => {
     let cancelled = false;
 
-    mermaid.initialize({
-      startOnLoad: false,
-      theme: document.documentElement.getAttribute("data-theme") === "dark"
-        ? "dark"
-        : "default",
-      securityLevel: "loose",
-    });
-
-    mermaid
-      .render(idRef.current, chart.trim())
-      .then(({ svg }) => {
-        if (!cancelled) setSvg(svg);
+    getMermaid()
+      .then((m) => {
+        if (cancelled) return;
+        m.initialize({
+          startOnLoad: false,
+          theme: document.documentElement.getAttribute("data-theme") === "dark"
+            ? "dark"
+            : "default",
+          securityLevel: "loose",
+        });
+        return m.render(idRef.current, chart.trim());
+      })
+      .then((result) => {
+        if (!cancelled && result) setSvg(result.svg);
       })
       .catch(() => {
         if (!cancelled) setSvg(`<pre class="mermaid-error">Mermaid diagram error</pre>`);
