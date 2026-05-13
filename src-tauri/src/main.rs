@@ -266,19 +266,22 @@ fn main() {
         ])
         .build(ctx)
         .expect("error while building tauri application")
-        .run(|app, event| {
+        .run(|_app, _event| {
             // Handle macOS file open events (double-click in Finder, drag onto dock icon)
-            if let RunEvent::Opened { urls } = &event {
-                for url in urls {
-                    if let Ok(path) = url.to_file_path() {
-                        if path.exists() && is_markdown_file(&path) {
-                            let path_str = path.to_string_lossy().to_string();
-                            // Try to emit to frontend (works if already running)
-                            let _ = app.emit("open-file", &path_str);
-                            // Also store in pending state (in case frontend isn't ready yet)
-                            if let Some(state) = app.try_state::<Mutex<PendingOpenFile>>() {
-                                if let Ok(mut guard) = state.lock() {
-                                    guard.path = Some(path_str);
+            #[cfg(target_os = "macos")]
+            {
+                if let RunEvent::Opened { urls } = &_event {
+                    for url in urls {
+                        if let Ok(path) = url.to_file_path() {
+                            if path.exists() && is_markdown_file(&path) {
+                                let path_str = path.to_string_lossy().to_string();
+                                // Try to emit to frontend (works if already running)
+                                let _ = _app.emit("open-file", &path_str);
+                                // Also store in pending state (in case frontend isn't ready yet)
+                                if let Some(state) = _app.try_state::<Mutex<PendingOpenFile>>() {
+                                    if let Ok(mut guard) = state.lock() {
+                                        guard.path = Some(path_str);
+                                    }
                                 }
                             }
                         }
