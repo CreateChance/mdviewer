@@ -9,103 +9,137 @@ interface SearchBarProps {
   filePath?: string;
 }
 
-/** Find all text match ranges inside a container element. */
+/** Find all text match ranges inside a container element.
+ *  Concatenates all text nodes so that matches spanning across adjacent
+ *  text nodes (e.g. "生产：") are found correctly.
+ */
 function findMatches(root: Element, query: string): Range[] {
   if (!query) return [];
 
-  const ranges: Range[] = [];
   const lower = query.toLowerCase();
-  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
 
+  // Collect all text nodes with their positions in the concatenated string
+  const textNodes: { node: Text; start: number; end: number }[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let totalLen = 0;
   let node: Text | null;
   while ((node = walker.nextNode() as Text | null)) {
-    const text = node.textContent?.toLowerCase() ?? "";
-    let start = 0;
-    while (true) {
-      const idx = text.indexOf(lower, start);
-      if (idx === -1) break;
-      const range = document.createRange();
-      range.setStart(node, idx);
-      range.setEnd(node, idx + query.length);
+    const len = node.textContent?.length ?? 0;
+    textNodes.push({ node, start: totalLen, end: totalLen + len });
+    totalLen += len;
+  }
+
+  // Build the full concatenated text (lowercase for case-insensitive search)
+  const fullText = textNodes.map((t) => t.node.textContent?.toLowerCase() ?? "").join("");
+
+  // Find all match positions in the concatenated string
+  const matchPositions: { start: number; end: number }[] = [];
+  let searchStart = 0;
+  while (true) {
+    const idx = fullText.indexOf(lower, searchStart);
+    if (idx === -1) break;
+    matchPositions.push({ start: idx, end: idx + lower.length });
+    searchStart = idx + 1;
+  }
+
+  if (matchPositions.length === 0) return [];
+
+  // Map each match position back to DOM Ranges
+  const ranges: Range[] = [];
+  for (const pos of matchPositions) {
+    const range = document.createRange();
+    let rangeStartSet = false;
+
+    for (const tn of textNodes) {
+      if (!rangeStartSet && tn.end > pos.start) {
+        range.setStart(tn.node, pos.start - tn.start);
+        rangeStartSet = true;
+      }
+      if (rangeStartSet && tn.end >= pos.end) {
+        range.setEnd(tn.node, pos.end - tn.start);
+        break;
+      }
+    }
+
+    if (rangeStartSet) {
       ranges.push(range);
-      start = idx + 1;
     }
   }
+
   return ranges;
 }
 
-const HIGHLIGHT_CLASS = "search-highlight";
-const HIGHLIGHT_ACTIVE_CLASS = "search-highlight-active";
+// Names for CSS Custom Highlight API registrations
+const HIGHLIGHT_NAME = "search-results";
+const HIGHLIGHT_ACTIVE_NAME = "search-result-active";
+
+// Check if CSS Custom Highlight API is available
+const hasHighlightAPI = typeof CSS !== "undefined" && "highlights" in CSS;
 
 export default function SearchBar({ containerSelector, contentSelector, filePath }: SearchBarProps) {
   const [visible, setVisible] = useState(false);
   const [query, setQuery] = useState("");
-  const [matches, setMatches] = useState<Range[]>([]);
+  const [matchCount, setMatchCount] = useState(0);
   const [currentIdx, setCurrentIdx] = useState(-1);
   const [searchedQuery, setSearchedQuery] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
-  const marksRef = useRef<HTMLElement[]>([]);
+  // Store ranges for navigation (scrolling to match)
+  const rangesRef = useRef<Range[]>([]);
 
-  // Clear all <mark> wrappers
+  // Clear all highlights via CSS Custom Highlight API
   const clearHighlights = useCallback(() => {
-    for (const mark of marksRef.current) {
-      const parent = mark.parentNode;
-      if (parent) {
-        parent.replaceChild(document.createTextNode(mark.textContent ?? ""), mark);
-        parent.normalize();
-      }
+    if (hasHighlightAPI) {
+      CSS.highlights.delete(HIGHLIGHT_NAME);
+      CSS.highlights.delete(HIGHLIGHT_ACTIVE_NAME);
     }
-    marksRef.current = [];
+    rangesRef.current = [];
   }, []);
 
-  // Apply <mark> wrappers for all matches
+  // Apply highlights using CSS Custom Highlight API (no DOM mutation!)
   const applyHighlights = useCallback((ranges: Range[], activeIdx: number) => {
-    clearHighlights();
-    const markEls: HTMLElement[] = [];
+    if (!hasHighlightAPI) return;
 
-    // Wrap ranges in reverse order to preserve earlier range positions
-    for (let i = ranges.length - 1; i >= 0; i--) {
-      const range = ranges[i];
-      try {
-        const mark = document.createElement("mark");
-        mark.className = i === activeIdx
-          ? `${HIGHLIGHT_CLASS} ${HIGHLIGHT_ACTIVE_CLASS}`
-          : HIGHLIGHT_CLASS;
-        range.surroundContents(mark);
-        markEls.unshift(mark);
-      } catch {
-        // surroundContents can fail if range crosses element boundaries
-      }
+    // Create highlight for all matches (excluding active)
+    const inactiveRanges = ranges.filter((_, i) => i !== activeIdx);
+    const activeRange = activeIdx >= 0 && activeIdx < ranges.length ? [ranges[activeIdx]] : [];
+
+    if (inactiveRanges.length > 0) {
+      const highlight = new Highlight(...inactiveRanges);
+      CSS.highlights.set(HIGHLIGHT_NAME, highlight);
+    } else {
+      CSS.highlights.delete(HIGHLIGHT_NAME);
     }
-    marksRef.current = markEls;
-  }, [clearHighlights]);
 
-  // Scroll active match into view
-  const scrollToMatch = useCallback((idx: number) => {
-    const mark = marksRef.current[idx];
-    if (!mark) return;
-
-    // Update active class
-    for (let i = 0; i < marksRef.current.length; i++) {
-      marksRef.current[i].className = i === idx
-        ? `${HIGHLIGHT_CLASS} ${HIGHLIGHT_ACTIVE_CLASS}`
-        : HIGHLIGHT_CLASS;
+    if (activeRange.length > 0) {
+      const activeHighlight = new Highlight(...activeRange);
+      CSS.highlights.set(HIGHLIGHT_ACTIVE_NAME, activeHighlight);
+    } else {
+      CSS.highlights.delete(HIGHLIGHT_ACTIVE_NAME);
     }
+  }, []);
+
+  // Scroll to the active match range
+  const scrollToMatch = useCallback((idx: number, ranges: Range[]) => {
+    const range = ranges[idx];
+    if (!range) return;
+
+    // Update highlight to reflect new active
+    applyHighlights(ranges, idx);
 
     const container = document.querySelector(containerSelector);
     if (container) {
-      const markTop = mark.getBoundingClientRect().top;
+      const rect = range.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
-      const offset = markTop - containerRect.top - containerRect.height / 3;
+      const offset = rect.top - containerRect.top - containerRect.height / 3;
       container.scrollTo({ top: container.scrollTop + offset, behavior: "smooth" });
     }
-  }, [containerSelector]);
+  }, [containerSelector, applyHighlights]);
 
   // Execute search
   const doSearch = useCallback((searchQuery: string) => {
     const content = document.querySelector(contentSelector);
     if (!content || !searchQuery) {
-      setMatches([]);
+      setMatchCount(0);
       setCurrentIdx(-1);
       setSearchedQuery("");
       clearHighlights();
@@ -116,19 +150,20 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
     setSearchedQuery(searchQuery);
 
     const found = findMatches(content, searchQuery);
-    setMatches(found);
+    rangesRef.current = found;
+    setMatchCount(found.length);
 
     if (found.length > 0) {
       setCurrentIdx(0);
       applyHighlights(found, 0);
       requestAnimationFrame(() => {
-        const mark = marksRef.current[0];
-        if (mark) {
+        const range = found[0];
+        if (range) {
           const container = document.querySelector(containerSelector);
           if (container) {
-            const markTop = mark.getBoundingClientRect().top;
+            const rect = range.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
-            const offset = markTop - containerRect.top - containerRect.height / 3;
+            const offset = rect.top - containerRect.top - containerRect.height / 3;
             container.scrollTo({ top: container.scrollTop + offset, behavior: "smooth" });
           }
         }
@@ -142,7 +177,7 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
   useEffect(() => {
     if (!visible) {
       clearHighlights();
-      setMatches([]);
+      setMatchCount(0);
       setCurrentIdx(-1);
     }
   }, [visible, clearHighlights]);
@@ -152,7 +187,7 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
     if (visible) {
       setVisible(false);
       setQuery("");
-      setMatches([]);
+      setMatchCount(0);
       setCurrentIdx(-1);
       clearHighlights();
     }
@@ -160,32 +195,29 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
   }, [filePath]);
 
   const goNext = useCallback(() => {
-    if (matches.length === 0) return;
-    const next = (currentIdx + 1) % matches.length;
+    if (matchCount === 0) return;
+    const next = (currentIdx + 1) % matchCount;
     setCurrentIdx(next);
-    scrollToMatch(next);
-  }, [matches.length, currentIdx, scrollToMatch]);
+    scrollToMatch(next, rangesRef.current);
+  }, [matchCount, currentIdx, scrollToMatch]);
 
   const goPrev = useCallback(() => {
-    if (matches.length === 0) return;
-    const prev = (currentIdx - 1 + matches.length) % matches.length;
+    if (matchCount === 0) return;
+    const prev = (currentIdx - 1 + matchCount) % matchCount;
     setCurrentIdx(prev);
-    scrollToMatch(prev);
-  }, [matches.length, currentIdx, scrollToMatch]);
+    scrollToMatch(prev, rangesRef.current);
+  }, [matchCount, currentIdx, scrollToMatch]);
 
   const close = useCallback(() => {
-    // Save scroll position and blur input before unmounting to prevent
-    // the browser from auto-scrolling when the focused element is removed.
     const container = document.querySelector(containerSelector);
     const scrollTop = container?.scrollTop ?? 0;
     inputRef.current?.blur();
     setVisible(false);
     setQuery("");
     setSearchedQuery("");
-    setMatches([]);
+    setMatchCount(0);
     setCurrentIdx(-1);
     clearHighlights();
-    // Restore scroll position after React removes the search bar from DOM
     requestAnimationFrame(() => {
       if (container) {
         container.scrollTop = scrollTop;
@@ -205,7 +237,6 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
         setVisible(true);
         if (selectedText) {
           setQuery(selectedText);
-          // Delay search to next frame so state is updated and input is mounted
           requestAnimationFrame(() => {
             inputRef.current?.focus();
             inputRef.current?.select();
@@ -252,9 +283,9 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            if (query === searchedQuery && matches.length > 0 && !e.shiftKey) {
+            if (query === searchedQuery && matchCount > 0 && !e.shiftKey) {
               goNext();
-            } else if (query === searchedQuery && matches.length > 0 && e.shiftKey) {
+            } else if (query === searchedQuery && matchCount > 0 && e.shiftKey) {
               goPrev();
             } else {
               doSearch(query);
@@ -263,10 +294,10 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
         }}
       />
       <span className="search-count">
-        {query ? `${matches.length > 0 ? currentIdx + 1 : 0} / ${matches.length}` : ""}
+        {query ? `${matchCount > 0 ? currentIdx + 1 : 0} / ${matchCount}` : ""}
       </span>
-      <button className="search-nav-btn" onClick={goPrev} title="上一个 (Shift+⌘G)" disabled={matches.length === 0}>▲</button>
-      <button className="search-nav-btn" onClick={goNext} title="下一个 (⌘G)" disabled={matches.length === 0}>▼</button>
+      <button className="search-nav-btn" onClick={goPrev} title="上一个 (Shift+⌘G)" disabled={matchCount === 0}>▲</button>
+      <button className="search-nav-btn" onClick={goNext} title="下一个 (⌘G)" disabled={matchCount === 0}>▼</button>
       <button className="search-close-btn" onClick={close} title="关闭 (Esc)">✕</button>
     </div>
   );
