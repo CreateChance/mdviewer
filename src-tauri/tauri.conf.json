@@ -1,6 +1,6 @@
 {
   "productName": "mdviewer",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "identifier": "com.createchance.mdviewer",
   "build": {
     "beforeDevCommand": "pnpm dev",
