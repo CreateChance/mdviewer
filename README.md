@@ -26,24 +26,31 @@ You can download the latest release from the [GitHub Releases](https://github.co
 ## Features
 
 - **Markdown Rendering** — Powered by react-markdown with GFM support (tables, task lists, strikethrough, etc.) and Emoji
-- **Table of Contents** — Auto-generated TOC sidebar on the left with click-to-jump, scroll-aware highlighting, and drag-to-resize
-- **File Explorer** — Right-side file tree that recursively lists all Markdown files in a directory, with auto-refresh on filesystem changes
-- **Code Highlighting** — Syntax highlighting via highlight.js with automatic language detection
+- **Table of Contents** — Auto-generated TOC sidebar on the left with click-to-jump, scroll-aware highlighting, tree-structured headings, and drag-to-resize
+- **File Explorer** — Right-side file tree that recursively lists all Markdown files in a directory, with auto-refresh on filesystem changes and drag-to-resize
+- **Full-text Search** — In-document search (⌘F / Ctrl+F) with match highlighting via CSS Custom Highlight API, match count, and keyboard navigation
+- **Code Highlighting** — Syntax highlighting via highlight.js with copy, expand (fullscreen), and collapse actions per code block
 - **Math Formulas** — KaTeX-based rendering for both inline and block math expressions
 - **Mermaid Diagrams** — Supports flowcharts, sequence diagrams, Gantt charts, and more
-- **Theme Switching** — Light / dark theme toggle with automatic preference persistence
+- **Alerts** — Microsoft Learn-style alerts (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!CAUTION]`, `[!WARNING]`)
+- **Image Lightbox** — Click any image to open a zoomable, pannable lightbox overlay
+- **Theme Switching** — Light / dark theme toggle with automatic preference persistence and native titlebar sync
+- **Content Width** — Three reading width modes (compact / standard / wide) with persistence
 - **Live Reload** — Automatically refreshes preview when the file is modified externally
 - **Smart Link Navigation** — Relative `.md` links open within the app; external URLs open in the system browser
 - **Local Image Support** — Renders relative-path images embedded in Markdown via Tauri asset protocol
+- **File Association** — Double-click `.md` / `.markdown` / `.mdx` files in Finder/Explorer to open directly in MD Viewer
+- **Native Menu** — Platform-native menu bar with Open File (⌘O), Open Folder (⌘⇧O), and standard Edit actions
+- **Link Preview** — Hover over links to see the target URL in a status bar
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|------------|
-| Desktop Framework | [Tauri v1](https://v1.tauri.app/) |
+| Desktop Framework | [Tauri v2](https://tauri.app/) |
 | Frontend | React 19 + TypeScript |
 | Build Tool | Vite 7 |
-| Markdown | react-markdown + remark-gfm + remark-math |
+| Markdown | react-markdown + remark-gfm + remark-math + remark-gemoji |
 | Code Highlighting | rehype-highlight + highlight.js |
 | Math | rehype-katex + KaTeX |
 | HTML Support | rehype-raw |
@@ -67,21 +74,25 @@ mdviewer/
 │   ├── main.tsx                  # App entry, global style imports
 │   ├── App.tsx                   # Root component, file handling & layout
 │   ├── components/
-│   │   ├── FileExplorer.tsx      # Right-side file tree browser
-│   │   ├── MarkdownRenderer.tsx  # Markdown rendering core (all plugins)
+│   │   ├── FileExplorer.tsx      # Right-side file tree browser (drag-to-resize)
+│   │   ├── ImageLightbox.tsx     # Zoomable/pannable image lightbox overlay
+│   │   ├── MarkdownRenderer.tsx  # Markdown rendering core (all plugins + alerts)
 │   │   ├── Mermaid.tsx           # Mermaid diagram component
-│   │   ├── Sidebar.tsx           # Left-side TOC navigation (drag-to-resize)
-│   │   └── Toolbar.tsx           # Top toolbar (open file/folder & theme toggle)
+│   │   ├── SearchBar.tsx         # In-document full-text search (CSS Highlight API)
+│   │   └── Sidebar.tsx           # Left-side TOC navigation (tree + drag-to-resize)
 │   ├── hooks/
+│   │   ├── useContentWidth.ts   # Reading width mode management (compact/standard/wide)
 │   │   └── useTheme.ts          # Light/dark theme management
-│   └── styles/
-│       └── index.css            # Global styles & CSS variable themes
+│   ├── styles/
+│   │   └── index.css            # Global styles & CSS variable themes
+│   └── utils/                   # Utility modules
 └── src-tauri/                   # Tauri / Rust backend
     ├── Cargo.toml               # Rust dependencies
-    ├── tauri.conf.json          # Tauri app config (window, permissions, etc.)
+    ├── tauri.conf.json          # Tauri app config (window, permissions, file associations)
     ├── build.rs                 # Tauri build script
+    ├── capabilities/            # Tauri v2 permission capabilities
     ├── src/
-    │   └── main.rs              # Rust entry (file/dir watching, directory scan)
+    │   └── main.rs              # Rust entry (file/dir watching, directory scan, native menu, file association)
     └── icons/                   # App icon assets
 ```
 
@@ -90,7 +101,7 @@ mdviewer/
 - [Node.js](https://nodejs.org/) >= 18
 - [pnpm](https://pnpm.io/) >= 8
 - [Rust](https://www.rust-lang.org/tools/install) >= 1.70
-- Tauri v1 system dependencies (see [Tauri Prerequisites](https://v1.tauri.app/v1/guides/getting-started/prerequisites))
+- Tauri v2 system dependencies (see [Tauri Prerequisites](https://tauri.app/start/prerequisites/))
 
 ## Development
 
@@ -147,14 +158,21 @@ pnpm tauri build --target universal-apple-darwin
 
 Edit the following fields in `src-tauri/tauri.conf.json`:
 
-- `package.productName` — Application name
-- `package.version` — Version number
-- `tauri.bundle.identifier` — Unique app identifier (e.g. `com.yourname.mdviewer`)
-- `tauri.bundle.icon` — App icons
+- `productName` — Application name
+- `version` — Version number
+- `identifier` — Unique app identifier (e.g. `com.yourname.mdviewer`)
+- `bundle.icon` — App icons
+- `bundle.fileAssociations` — Associated file extensions
 
 ### CI/CD
 
-Refer to the official [Tauri GitHub Actions guide](https://v1.tauri.app/v1/guides/building/cross-platform) for multi-platform automated builds and releases.
+The project includes a GitHub Actions workflow (`.github/workflows/release.yml`) that automatically builds and publishes releases for macOS (Apple Silicon + Intel), Windows (x64), and Linux (x64) when a version tag (`v*`) is pushed.
+
+```bash
+# Create and push a release tag
+git tag v0.1.6
+git push origin v0.1.6
+```
 
 ## License
 
