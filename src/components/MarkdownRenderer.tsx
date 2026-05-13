@@ -8,8 +8,8 @@ import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
 import type { Components } from "react-markdown";
-import { open } from "@tauri-apps/api/shell";
-import { convertFileSrc } from "@tauri-apps/api/tauri";
+import { open } from "@tauri-apps/plugin-shell";
+import { convertFileSrc } from "@tauri-apps/api/core";
 import ImageLightbox from "./ImageLightbox";
 
 const Mermaid = lazy(() => import("./Mermaid"));

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { invoke } from "@tauri-apps/api/tauri";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 type Theme = "light" | "dark";
 
@@ -16,8 +16,8 @@ export function useTheme() {
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("md-viewer-theme", theme);
 
-    // Sync native window titlebar theme via tauri-plugin-theme
-    invoke("plugin:theme|set_theme", { theme }).catch(() => {
+    // Sync native window titlebar theme via Tauri 2 built-in API
+    getCurrentWebviewWindow().setTheme(theme === "dark" ? "dark" : "light").catch(() => {
       // Ignore errors (e.g. when running in browser dev mode)
     });
   }, [theme]);

@@ -6,7 +6,8 @@ use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{
-    AppHandle, CustomMenuItem, Manager, Menu, MenuItem, State, Submenu,
+    menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu},
+    AppHandle, Emitter, Manager, State,
 };
 use walkdir::WalkDir;
 
@@ -43,7 +44,7 @@ fn watch_file(
         move |res: Result<Vec<notify_debouncer_mini::DebouncedEvent>, notify::Error>| {
             if let Ok(events) = res {
                 if events.iter().any(|e| e.kind == DebouncedEventKind::Any) {
-                    let _ = app_handle.emit_all("file-changed", &emit_path);
+                    let _ = app_handle.emit("file-changed", &emit_path);
                 }
             }
         },
@@ -92,7 +93,7 @@ fn watch_dir(
             if let Ok(events) = res {
                 let dominated = events.iter().any(|e| e.kind == DebouncedEventKind::Any);
                 if dominated {
-                    let _ = app_handle.emit_all("dir-changed", &emit_dir);
+                    let _ = app_handle.emit("dir-changed", &emit_dir);
                 }
             }
         },
@@ -135,91 +136,84 @@ fn scan_md_files(dir: String) -> Result<Vec<String>, String> {
     Ok(files)
 }
 
-fn build_menu() -> Menu {
-    // File submenu
-    let open_file = CustomMenuItem::new("open_file", "Open File")
-        .accelerator("CmdOrCtrl+O");
-    let open_folder = CustomMenuItem::new("open_folder", "Open Folder")
-        .accelerator("CmdOrCtrl+Shift+O");
-
-    let file_submenu = Submenu::new(
-        "File",
-        Menu::new()
-            .add_item(open_file)
-            .add_item(open_folder)
-            .add_native_item(MenuItem::Separator)
-            .add_native_item(MenuItem::CloseWindow),
-    );
-
-    // On macOS, include the app menu for standard behavior
-    #[cfg(target_os = "macos")]
-    {
-        let app_menu = Submenu::new(
-            "MD Viewer",
-            Menu::new()
-                .add_native_item(MenuItem::About(
-                    "MD Viewer".to_string(),
-                    Default::default(),
-                ))
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Hide)
-                .add_native_item(MenuItem::HideOthers)
-                .add_native_item(MenuItem::ShowAll)
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Quit),
-        );
-
-        let edit_menu = Submenu::new(
-            "Edit",
-            Menu::new()
-                .add_native_item(MenuItem::Undo)
-                .add_native_item(MenuItem::Redo)
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Cut)
-                .add_native_item(MenuItem::Copy)
-                .add_native_item(MenuItem::Paste)
-                .add_native_item(MenuItem::SelectAll),
-        );
-
-        Menu::new()
-            .add_submenu(app_menu)
-            .add_submenu(file_submenu)
-            .add_submenu(edit_menu)
-    }
-
-    #[cfg(not(target_os = "macos"))]
-    {
-        let edit_menu = Submenu::new(
-            "Edit",
-            Menu::new()
-                .add_native_item(MenuItem::Undo)
-                .add_native_item(MenuItem::Redo)
-                .add_native_item(MenuItem::Separator)
-                .add_native_item(MenuItem::Cut)
-                .add_native_item(MenuItem::Copy)
-                .add_native_item(MenuItem::Paste)
-                .add_native_item(MenuItem::SelectAll),
-        );
-
-        Menu::new()
-            .add_submenu(file_submenu)
-            .add_submenu(edit_menu)
-    }
-}
-
 fn main() {
-    let mut ctx = tauri::generate_context!();
+    let ctx = tauri::generate_context!();
     tauri::Builder::default()
-        .plugin(tauri_plugin_theme::init(ctx.config_mut()))
-        .menu(build_menu())
-        .on_menu_event(|event| {
-            let window = event.window();
-            match event.menu_item_id() {
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_shell::init())
+        .menu(|app| {
+            // File submenu
+            let open_file = MenuItemBuilder::with_id("open_file", "Open File")
+                .accelerator("CmdOrCtrl+O")
+                .build(app)?;
+            let open_folder = MenuItemBuilder::with_id("open_folder", "Open Folder")
+                .accelerator("CmdOrCtrl+Shift+O")
+                .build(app)?;
+
+            let file_submenu = Submenu::with_items(
+                app,
+                "File",
+                true,
+                &[
+                    &open_file,
+                    &open_folder,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::close_window(app, Some("Close Window"))?,
+                ],
+            )?;
+
+            let edit_submenu = Submenu::with_items(
+                app,
+                "Edit",
+                true,
+                &[
+                    &PredefinedMenuItem::undo(app, Some("Undo"))?,
+                    &PredefinedMenuItem::redo(app, Some("Redo"))?,
+                    &PredefinedMenuItem::separator(app)?,
+                    &PredefinedMenuItem::cut(app, Some("Cut"))?,
+                    &PredefinedMenuItem::copy(app, Some("Copy"))?,
+                    &PredefinedMenuItem::paste(app, Some("Paste"))?,
+                    &PredefinedMenuItem::select_all(app, Some("Select All"))?,
+                ],
+            )?;
+
+            #[cfg(target_os = "macos")]
+            {
+                let app_submenu = Submenu::with_items(
+                    app,
+                    "MD Viewer",
+                    true,
+                    &[
+                        &PredefinedMenuItem::about(app, Some("About MD Viewer"), None)?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::hide(app, Some("Hide"))?,
+                        &PredefinedMenuItem::hide_others(app, Some("Hide Others"))?,
+                        &PredefinedMenuItem::show_all(app, Some("Show All"))?,
+                        &PredefinedMenuItem::separator(app)?,
+                        &PredefinedMenuItem::quit(app, Some("Quit"))?,
+                    ],
+                )?;
+
+                Menu::with_items(app, &[&app_submenu, &file_submenu, &edit_submenu])
+            }
+
+            #[cfg(not(target_os = "macos"))]
+            {
+                Menu::with_items(app, &[&file_submenu, &edit_submenu])
+            }
+        })
+        .on_menu_event(|app, event| {
+            match event.id().as_ref() {
                 "open_file" => {
-                    let _ = window.emit("menu-open-file", ());
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.emit("menu-open-file", ());
+                    }
                 }
                 "open_folder" => {
-                    let _ = window.emit("menu-open-folder", ());
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.emit("menu-open-folder", ());
+                    }
                 }
                 _ => {}
             }
