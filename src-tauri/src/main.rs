@@ -7,7 +7,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{
     menu::{Menu, MenuItemBuilder, PredefinedMenuItem, Submenu},
-    AppHandle, Emitter, Manager, State,
+    AppHandle, Emitter, Manager, RunEvent, State,
 };
 use walkdir::WalkDir;
 
@@ -19,6 +19,12 @@ struct FileWatcherState {
 struct DirWatcherState {
     handle: Option<notify_debouncer_mini::Debouncer<notify::RecommendedWatcher>>,
     path: Option<PathBuf>,
+}
+
+/// Stores the file path that was requested to be opened (via CLI args or OS file association)
+/// before the frontend was ready to receive events.
+struct PendingOpenFile {
+    path: Option<String>,
 }
 
 #[tauri::command]
@@ -108,6 +114,14 @@ fn watch_dir(
     guard.handle = Some(debouncer);
     guard.path = Some(watch_path);
     Ok(())
+}
+
+/// Called by the frontend on startup to retrieve any file path that was pending
+/// (e.g., from double-clicking a .md file in Finder before the frontend was ready).
+#[tauri::command]
+fn get_pending_open_file(state: State<'_, Mutex<PendingOpenFile>>) -> Option<String> {
+    let mut guard = state.lock().ok()?;
+    guard.path.take()
 }
 
 /// Recursively scan a directory for markdown files, returning their absolute paths.
@@ -226,12 +240,59 @@ fn main() {
             handle: None,
             path: None,
         }))
+        .manage(Mutex::new(PendingOpenFile { path: None }))
+        .setup(|app| {
+            // Handle file path passed via CLI arguments (Windows/Linux double-click)
+            let args: Vec<String> = std::env::args().collect();
+            if args.len() > 1 {
+                let path = PathBuf::from(&args[1]);
+                if path.exists() && is_markdown_file(&path) {
+                    let path_str = path.to_string_lossy().to_string();
+                    // Store in pending state for the frontend to pick up
+                    let state = app.state::<Mutex<PendingOpenFile>>();
+                    let mut guard = state.lock().unwrap();
+                    guard.path = Some(path_str);
+                    drop(guard);
+                }
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             watch_file,
             unwatch_file,
             watch_dir,
-            scan_md_files
+            scan_md_files,
+            get_pending_open_file
         ])
-        .run(ctx)
-        .expect("error while running tauri application");
+        .build(ctx)
+        .expect("error while building tauri application")
+        .run(|app, event| {
+            // Handle macOS file open events (double-click in Finder, drag onto dock icon)
+            if let RunEvent::Opened { urls } = &event {
+                for url in urls {
+                    if let Ok(path) = url.to_file_path() {
+                        if path.exists() && is_markdown_file(&path) {
+                            let path_str = path.to_string_lossy().to_string();
+                            // Try to emit to frontend (works if already running)
+                            let _ = app.emit("open-file", &path_str);
+                            // Also store in pending state (in case frontend isn't ready yet)
+                            if let Some(state) = app.try_state::<Mutex<PendingOpenFile>>() {
+                                if let Ok(mut guard) = state.lock() {
+                                    guard.path = Some(path_str);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+}
+
+/// Check if a file path has a markdown extension.
+fn is_markdown_file(path: &PathBuf) -> bool {
+    let md_extensions = ["md", "markdown", "mdx"];
+    path.extension()
+        .and_then(|ext| ext.to_str())
+        .map(|ext| md_extensions.contains(&ext.to_lowercase().as_str()))
+        .unwrap_or(false)
 }

@@ -128,6 +128,33 @@ function App() {
     };
   }, [openFileDialog, openFolderDialog]);
 
+  // Listen for file open events from OS file association (double-click .md in Finder/Explorer)
+  useEffect(() => {
+    const unlisten = listen<string>("open-file", async (event) => {
+      const path = event.payload;
+      if (path) {
+        await openFilePath(path);
+        await scanDir(getDir(path));
+      }
+    });
+    return () => { unlisten.then((fn) => fn()); };
+  }, [openFilePath, scanDir]);
+
+  // On startup, check if there's a pending file to open (cold start from file association)
+  useEffect(() => {
+    (async () => {
+      try {
+        const pending = await invoke<string | null>("get_pending_open_file");
+        if (pending) {
+          await openFilePath(pending);
+          await scanDir(getDir(pending));
+        }
+      } catch (err) {
+        console.error("Failed to get pending open file:", err);
+      }
+    })();
+  }, [openFilePath, scanDir]);
+
   const handleExplorerSelect = useCallback(async (path: string) => {
     await openFilePath(path);
   }, [openFilePath]);
