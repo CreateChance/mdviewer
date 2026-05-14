@@ -9,6 +9,7 @@ import Sidebar from "./components/Sidebar";
 import MarkdownRenderer from "./components/MarkdownRenderer";
 import FileExplorer from "./components/FileExplorer";
 import SearchBar from "./components/SearchBar";
+import AboutDialog from "./components/AboutDialog";
 
 function getDir(filePath: string): string {
   const sep = filePath.includes("\\") ? "\\" : "/";
@@ -122,9 +123,13 @@ function App() {
     const unlistenFolder = listen("menu-open-folder", () => {
       openFolderDialog();
     });
+    const unlistenAbout = listen("menu-about", () => {
+      setAboutVisible(true);
+    });
     return () => {
       unlistenFile.then((fn) => fn());
       unlistenFolder.then((fn) => fn());
+      unlistenAbout.then((fn) => fn());
     };
   }, [openFileDialog, openFolderDialog]);
 
@@ -160,6 +165,7 @@ function App() {
   }, [openFilePath]);
 
   const [hoveredLink, setHoveredLink] = useState("");
+  const [aboutVisible, setAboutVisible] = useState(false);
 
   const hasExplorer = explorerFiles.length > 0;
 
@@ -238,6 +244,8 @@ function App() {
       {hoveredLink && (
         <div className="link-status-bar">{hoveredLink}</div>
       )}
+
+      <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
     </div>
   );
 }

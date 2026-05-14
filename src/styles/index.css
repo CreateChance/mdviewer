@@ -1155,3 +1155,81 @@ body {
   z-index: 200;
   pointer-events: none;
 }
+
+/* ===== About Dialog ===== */
+.about-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-dialog {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 32px 36px 28px;
+  min-width: 340px;
+  max-width: 420px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.about-dialog h2 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.about-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.about-info {
+  text-align: left;
+  font-size: 13px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  margin-bottom: 24px;
+}
+
+.about-info dt {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.about-info dd {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.about-info dd a {
+  color: var(--link-color);
+  text-decoration: none;
+  cursor: pointer;
+}
+.about-info dd a:hover {
+  text-decoration: underline;
+}
+
+.about-close {
+  padding: 6px 24px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.about-close:hover {
+  background: var(--toc-hover-bg);
+  border-color: var(--accent);
+}

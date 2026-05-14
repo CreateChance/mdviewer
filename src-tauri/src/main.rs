@@ -194,12 +194,15 @@ fn main() {
 
             #[cfg(target_os = "macos")]
             {
+                let about_item = MenuItemBuilder::with_id("about", "About MD Viewer")
+                    .build(app)?;
+
                 let app_submenu = Submenu::with_items(
                     app,
                     "MD Viewer",
                     true,
                     &[
-                        &PredefinedMenuItem::about(app, Some("About MD Viewer"), None)?,
+                        &about_item,
                         &PredefinedMenuItem::separator(app)?,
                         &PredefinedMenuItem::hide(app, Some("Hide"))?,
                         &PredefinedMenuItem::hide_others(app, Some("Hide Others"))?,
@@ -214,7 +217,17 @@ fn main() {
 
             #[cfg(not(target_os = "macos"))]
             {
-                Menu::with_items(app, &[&file_submenu, &edit_submenu])
+                let about_item = MenuItemBuilder::with_id("about", "About MD Viewer")
+                    .build(app)?;
+
+                let help_submenu = Submenu::with_items(
+                    app,
+                    "Help",
+                    true,
+                    &[&about_item],
+                )?;
+
+                Menu::with_items(app, &[&file_submenu, &edit_submenu, &help_submenu])
             }
         })
         .on_menu_event(|app, event| {
@@ -227,6 +240,11 @@ fn main() {
                 "open_folder" => {
                     if let Some(window) = app.get_webview_window("main") {
                         let _ = window.emit("menu-open-folder", ());
+                    }
+                }
+                "about" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.emit("menu-about", ());
                     }
                 }
                 _ => {}
