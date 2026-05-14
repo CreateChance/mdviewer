@@ -10,7 +10,6 @@ import MarkdownRenderer from "./components/MarkdownRenderer";
 import FileExplorer from "./components/FileExplorer";
 import SearchBar from "./components/SearchBar";
 import AboutDialog from "./components/AboutDialog";
-import UpdateDialog from "./components/UpdateDialog";
 import UpdateToast from "./components/UpdateToast";
 import { checkForUpdate, type UpdateResult } from "./utils/updateChecker";
 
@@ -120,24 +119,15 @@ function App() {
 
   const [hoveredLink, setHoveredLink] = useState("");
   const [aboutVisible, setAboutVisible] = useState(false);
-  const [updateDialogVisible, setUpdateDialogVisible] = useState(false);
-  const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
-  const [updateChecking, setUpdateChecking] = useState(false);
-  const [toastUpdateInfo, setToastUpdateInfo] = useState<UpdateResult | null>(null);
+  const [toastResult, setToastResult] = useState<UpdateResult | null>(null);
 
   const doCheckUpdate = useCallback(async (silent = false) => {
-    if (!silent) {
-      setUpdateChecking(true);
-      setUpdateDialogVisible(true);
-    }
     const result = await checkForUpdate();
-    if (!silent) {
-      setUpdateResult(result);
-      setUpdateChecking(false);
-    } else if (result.status === "update") {
-      // Silent mode: show toast instead of dialog
-      setToastUpdateInfo(result);
+    if (silent && result.status !== "update") {
+      // Silent mode: only show toast if there's an update
+      return;
     }
+    setToastResult(result);
   }, []);
 
   // Listen for menu events from Tauri native menu
@@ -280,15 +270,9 @@ function App() {
       )}
 
       <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
-      <UpdateDialog
-        visible={updateDialogVisible}
-        result={updateResult}
-        checking={updateChecking}
-        onClose={() => setUpdateDialogVisible(false)}
-      />
       <UpdateToast
-        updateInfo={toastUpdateInfo?.info ?? null}
-        onDismiss={() => setToastUpdateInfo(null)}
+        result={toastResult}
+        onDismiss={() => setToastResult(null)}
       />
     </div>
   );

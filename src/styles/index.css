@@ -1234,52 +1234,6 @@ body {
   border-color: var(--accent);
 }
 
-/* ===== Update Dialog ===== */
-.update-dialog {
-  min-width: 360px;
-}
-
-.update-checking {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 16px 0 24px;
-}
-
-.update-error {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 16px 0 24px;
-}
-
-.update-uptodate {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 16px 0 24px;
-}
-
-.update-actions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-.update-download {
-  padding: 8px 24px;
-  border: none;
-  border-radius: 6px;
-  background: var(--accent);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-.update-download:hover {
-  opacity: 0.85;
-}
-
 /* ===== Update Toast (non-blocking notification) ===== */
 .update-toast {
   position: fixed;
