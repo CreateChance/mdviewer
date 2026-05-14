@@ -1233,3 +1233,137 @@ body {
   background: var(--toc-hover-bg);
   border-color: var(--accent);
 }
+
+/* ===== Update Dialog ===== */
+.update-dialog {
+  min-width: 360px;
+}
+
+.update-checking {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 16px 0 24px;
+}
+
+.update-error {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 16px 0 24px;
+}
+
+.update-uptodate {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 16px 0 24px;
+}
+
+.update-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.update-download {
+  padding: 8px 24px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.update-download:hover {
+  opacity: 0.85;
+}
+
+/* ===== Update Toast (non-blocking notification) ===== */
+.update-toast {
+  position: fixed;
+  bottom: 48px;
+  right: 20px;
+  z-index: 500;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 240px;
+  max-width: 320px;
+  transform: translateX(calc(100% + 24px));
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.update-toast-visible {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.update-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.update-toast-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.update-toast-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+.update-toast-text strong {
+  font-weight: 600;
+}
+.update-toast-text span {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.update-toast-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.update-toast-download {
+  flex: 1;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.update-toast-download:hover {
+  opacity: 0.85;
+}
+
+.update-toast-dismiss {
+  padding: 6px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.update-toast-dismiss:hover {
+  background: var(--toc-hover-bg);
+  color: var(--text-primary);
+}

@@ -196,6 +196,8 @@ fn main() {
             {
                 let about_item = MenuItemBuilder::with_id("about", "About MD Viewer")
                     .build(app)?;
+                let check_update_item = MenuItemBuilder::with_id("check_update", "Check for Updates...")
+                    .build(app)?;
 
                 let app_submenu = Submenu::with_items(
                     app,
@@ -203,6 +205,7 @@ fn main() {
                     true,
                     &[
                         &about_item,
+                        &check_update_item,
                         &PredefinedMenuItem::separator(app)?,
                         &PredefinedMenuItem::hide(app, Some("Hide"))?,
                         &PredefinedMenuItem::hide_others(app, Some("Hide Others"))?,
@@ -219,12 +222,14 @@ fn main() {
             {
                 let about_item = MenuItemBuilder::with_id("about", "About MD Viewer")
                     .build(app)?;
+                let check_update_item = MenuItemBuilder::with_id("check_update", "Check for Updates...")
+                    .build(app)?;
 
                 let help_submenu = Submenu::with_items(
                     app,
                     "Help",
                     true,
-                    &[&about_item],
+                    &[&about_item, &check_update_item],
                 )?;
 
                 Menu::with_items(app, &[&file_submenu, &edit_submenu, &help_submenu])
@@ -245,6 +250,11 @@ fn main() {
                 "about" => {
                     if let Some(window) = app.get_webview_window("main") {
                         let _ = window.emit("menu-about", ());
+                    }
+                }
+                "check_update" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.emit("menu-check-update", ());
                     }
                 }
                 _ => {}

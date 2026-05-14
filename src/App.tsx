@@ -10,6 +10,9 @@ import MarkdownRenderer from "./components/MarkdownRenderer";
 import FileExplorer from "./components/FileExplorer";
 import SearchBar from "./components/SearchBar";
 import AboutDialog from "./components/AboutDialog";
+import UpdateDialog from "./components/UpdateDialog";
+import UpdateToast from "./components/UpdateToast";
+import { checkForUpdate, type UpdateResult } from "./utils/updateChecker";
 
 function getDir(filePath: string): string {
   const sep = filePath.includes("\\") ? "\\" : "/";
@@ -115,6 +118,28 @@ function App() {
     }
   }, [scanDir]);
 
+  const [hoveredLink, setHoveredLink] = useState("");
+  const [aboutVisible, setAboutVisible] = useState(false);
+  const [updateDialogVisible, setUpdateDialogVisible] = useState(false);
+  const [updateResult, setUpdateResult] = useState<UpdateResult | null>(null);
+  const [updateChecking, setUpdateChecking] = useState(false);
+  const [toastUpdateInfo, setToastUpdateInfo] = useState<UpdateResult | null>(null);
+
+  const doCheckUpdate = useCallback(async (silent = false) => {
+    if (!silent) {
+      setUpdateChecking(true);
+      setUpdateDialogVisible(true);
+    }
+    const result = await checkForUpdate();
+    if (!silent) {
+      setUpdateResult(result);
+      setUpdateChecking(false);
+    } else if (result.status === "update") {
+      // Silent mode: show toast instead of dialog
+      setToastUpdateInfo(result);
+    }
+  }, []);
+
   // Listen for menu events from Tauri native menu
   useEffect(() => {
     const unlistenFile = listen("menu-open-file", () => {
@@ -126,12 +151,16 @@ function App() {
     const unlistenAbout = listen("menu-about", () => {
       setAboutVisible(true);
     });
+    const unlistenUpdate = listen("menu-check-update", () => {
+      doCheckUpdate(false);
+    });
     return () => {
       unlistenFile.then((fn) => fn());
       unlistenFolder.then((fn) => fn());
       unlistenAbout.then((fn) => fn());
+      unlistenUpdate.then((fn) => fn());
     };
-  }, [openFileDialog, openFolderDialog]);
+  }, [openFileDialog, openFolderDialog, doCheckUpdate]);
 
   // Listen for file open events from OS file association (double-click .md in Finder/Explorer)
   useEffect(() => {
@@ -164,8 +193,13 @@ function App() {
     await openFilePath(path);
   }, [openFilePath]);
 
-  const [hoveredLink, setHoveredLink] = useState("");
-  const [aboutVisible, setAboutVisible] = useState(false);
+  // Auto-check for updates on startup (silent mode)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      doCheckUpdate(true);
+    }, 3000); // Delay 3s after startup to not block initial load
+    return () => clearTimeout(timer);
+  }, [doCheckUpdate]);
 
   const hasExplorer = explorerFiles.length > 0;
 
@@ -246,6 +280,16 @@ function App() {
       )}
 
       <AboutDialog visible={aboutVisible} onClose={() => setAboutVisible(false)} />
+      <UpdateDialog
+        visible={updateDialogVisible}
+        result={updateResult}
+        checking={updateChecking}
+        onClose={() => setUpdateDialogVisible(false)}
+      />
+      <UpdateToast
+        updateInfo={toastUpdateInfo?.info ?? null}
+        onDismiss={() => setToastUpdateInfo(null)}
+      />
     </div>
   );
 }
