@@ -71,7 +71,9 @@ This is a paragraph with `inline code` inside it.
 
 ### Autolinks (GFM)
 
-https://www.example.com
+https://www.example.com, addtional string here.
+
+https://www.example.com，额外的中文。
 
 ### Anchor Links
 

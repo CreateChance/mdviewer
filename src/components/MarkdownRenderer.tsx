@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkGemoji from "remark-gemoji";
 import remarkMath from "remark-math";
+import remarkAutolinkTrim from "../utils/remarkAutolinkTrim";
 import rehypeKatex from "rehype-katex";
 import rehypeHighlight from "rehype-highlight";
 import rehypeRaw from "rehype-raw";
@@ -363,7 +364,7 @@ export default function MarkdownRenderer({ content, filePath, onNavigate, onHove
   return (
     <article className="markdown-body">
       <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkGemoji, remarkMath]}
+        remarkPlugins={[remarkGfm, remarkAutolinkTrim, remarkGemoji, remarkMath]}
         rehypePlugins={[rehypeRaw, rehypeSlugify, rehypeKatex, [rehypeHighlight, { detect: false }], rehypeStripNoLang]}
         components={components}
       >
