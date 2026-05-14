@@ -2,9 +2,9 @@
 
 A lightweight, fast desktop Markdown reader built with Tauri + React + TypeScript. Supports GFM, code highlighting, math formulas, Mermaid diagrams, live reload, and more — all in a clean, native experience across macOS, Windows, and Linux.
 
-<p align="center">
-  <img src="./screenshots/main.png" alt="Screenshot" width="720" />
-</p>
+| Light Theme | Dark Theme |
+|:-----------:|:----------:|
+| ![Light Theme](./screenshots/main_light.png) | ![Dark Theme](./screenshots/main_dark.png) |
 
 ## Downloads
 
@@ -31,8 +31,8 @@ You can download the latest release from the [GitHub Releases](https://github.co
 - **Full-text Search** — In-document search (⌘F / Ctrl+F) with match highlighting via CSS Custom Highlight API, match count, and keyboard navigation
 - **Code Highlighting** — Syntax highlighting via highlight.js with copy, expand (fullscreen), and collapse actions per code block
 - **Math Formulas** — KaTeX-based rendering for both inline and block math expressions
-- **Mermaid Diagrams** — Supports flowcharts, sequence diagrams, Gantt charts, and more
-- **Alerts** — Microsoft Learn-style alerts (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!CAUTION]`, `[!WARNING]`)
+- **Mermaid Diagrams** — Supports flowcharts, sequence diagrams, class diagrams, Gantt charts, pie charts, state diagrams, and more with fullscreen zoom/pan
+- **Alerts** — GitHub / Microsoft Learn-style alerts (`[!NOTE]`, `[!TIP]`, `[!IMPORTANT]`, `[!CAUTION]`, `[!WARNING]`)
 - **Image Lightbox** — Click any image to open a zoomable, pannable lightbox overlay
 - **Theme Switching** — Light / dark theme toggle with automatic preference persistence and native titlebar sync
 - **Content Width** — Three reading width modes (compact / standard / wide) with persistence
@@ -42,6 +42,8 @@ You can download the latest release from the [GitHub Releases](https://github.co
 - **File Association** — Double-click `.md` / `.markdown` / `.mdx` files in Finder/Explorer to open directly in MD Viewer
 - **Native Menu** — Platform-native menu bar with Open File (⌘O), Open Folder (⌘⇧O), and standard Edit actions
 - **Link Preview** — Hover over links to see the target URL in a status bar
+- **Update Checker** — Automatic update check on startup with in-app notification toast and manual check via menu
+- **About Dialog** — Displays version, build time, and developer info
 
 ## Tech Stack
 
@@ -57,6 +59,7 @@ You can download the latest release from the [GitHub Releases](https://github.co
 | Diagrams | Mermaid |
 | File Watching | notify + notify-debouncer-mini |
 | Directory Scanning | walkdir |
+| Update Checking | reqwest (GitHub API) |
 | Package Manager | pnpm |
 
 ## Project Structure
@@ -74,18 +77,21 @@ mdviewer/
 │   ├── main.tsx                  # App entry, global style imports
 │   ├── App.tsx                   # Root component, file handling & layout
 │   ├── components/
+│   │   ├── AboutDialog.tsx       # About dialog with version & build info
 │   │   ├── FileExplorer.tsx      # Right-side file tree browser (drag-to-resize)
 │   │   ├── ImageLightbox.tsx     # Zoomable/pannable image lightbox overlay
 │   │   ├── MarkdownRenderer.tsx  # Markdown rendering core (all plugins + alerts)
-│   │   ├── Mermaid.tsx           # Mermaid diagram component
+│   │   ├── Mermaid.tsx           # Mermaid diagram component with fullscreen zoom/pan
 │   │   ├── SearchBar.tsx         # In-document full-text search (CSS Highlight API)
-│   │   └── Sidebar.tsx           # Left-side TOC navigation (tree + drag-to-resize)
+│   │   ├── Sidebar.tsx           # Left-side TOC navigation (tree + drag-to-resize)
+│   │   └── UpdateToast.tsx       # Update notification toast
 │   ├── hooks/
 │   │   ├── useContentWidth.ts   # Reading width mode management (compact/standard/wide)
 │   │   └── useTheme.ts          # Light/dark theme management
 │   ├── styles/
 │   │   └── index.css            # Global styles & CSS variable themes
-│   └── utils/                   # Utility modules
+│   └── utils/
+│       └── updateChecker.ts     # GitHub release update checker
 └── src-tauri/                   # Tauri / Rust backend
     ├── Cargo.toml               # Rust dependencies
     ├── tauri.conf.json          # Tauri app config (window, permissions, file associations)
@@ -170,8 +176,8 @@ The project includes a GitHub Actions workflow (`.github/workflows/release.yml`)
 
 ```bash
 # Create and push a release tag
-git tag v0.1.6
-git push origin v0.1.6
+git tag v0.1.7
+git push origin v0.1.7
 ```
 
 ## License
