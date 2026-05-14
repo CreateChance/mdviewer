@@ -2,6 +2,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
+use serde::Serialize;
 use std::path::PathBuf;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -150,6 +151,71 @@ fn scan_md_files(dir: String) -> Result<Vec<String>, String> {
     Ok(files)
 }
 
+#[derive(Serialize, Clone)]
+struct GitHubReleaseInfo {
+    tag_name: String,
+    html_url: String,
+    body: String,
+    draft: bool,
+}
+
+/// Fetch the latest release from GitHub releases Atom feed.
+/// This avoids the GitHub API rate limit (60 req/hr for unauthenticated).
+#[tauri::command]
+async fn check_github_release() -> Result<Option<GitHubReleaseInfo>, String> {
+    let client = reqwest::Client::new();
+    let resp = client
+        .get("https://github.com/CreateChance/mdviewer/releases.atom")
+        .header("User-Agent", "mdviewer-update-checker")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !resp.status().is_success() {
+        return Err(format!("GitHub returned status {}", resp.status()));
+    }
+
+    let body = resp.text().await.map_err(|e| e.to_string())?;
+
+    // Parse the first <entry> from the Atom feed to get the latest release
+    // Extract tag from <id>tag:github.com,2008:Repository/xxx/TAG</id>
+    let tag = body
+        .find("<entry>")
+        .and_then(|entry_start| {
+            let entry_section = &body[entry_start..];
+            let id_start = entry_section.find("<id>")?;
+            let id_end = entry_section.find("</id>")?;
+            let id_content = &entry_section[id_start + 4..id_end];
+            // id_content looks like: tag:github.com,2008:Repository/12345/v0.1.6
+            id_content.rsplit('/').next().map(|s| s.to_string())
+        });
+
+    let tag = match tag {
+        Some(t) if !t.is_empty() => t,
+        _ => return Ok(None),
+    };
+
+    // Extract title from <title>...</title> within the first entry
+    let title = body
+        .find("<entry>")
+        .and_then(|entry_start| {
+            let entry_section = &body[entry_start..];
+            let title_start = entry_section.find("<title>")?;
+            let title_end = entry_section[title_start..].find("</title>")?;
+            Some(entry_section[title_start + 7..title_start + title_end].to_string())
+        })
+        .unwrap_or_default();
+
+    let html_url = format!("https://github.com/CreateChance/mdviewer/releases/tag/{}", tag);
+
+    Ok(Some(GitHubReleaseInfo {
+        tag_name: tag,
+        html_url,
+        body: title,
+        draft: false,
+    }))
+}
+
 fn main() {
     let ctx = tauri::generate_context!();
     tauri::Builder::default()
@@ -290,7 +356,8 @@ fn main() {
             unwatch_file,
             watch_dir,
             scan_md_files,
-            get_pending_open_file
+            get_pending_open_file,
+            check_github_release
         ])
         .build(ctx)
         .expect("error while building tauri application")

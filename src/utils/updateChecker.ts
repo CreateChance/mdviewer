@@ -1,6 +1,5 @@
 import { getVersion } from "@tauri-apps/api/app";
-
-const GITHUB_REPO = "CreateChance/mdviewer";
+import { invoke } from "@tauri-apps/api/core";
 
 export interface UpdateInfo {
   currentVersion: string;
@@ -13,6 +12,13 @@ export interface UpdateInfo {
 export interface UpdateResult {
   status: "update" | "uptodate" | "no-release" | "error";
   info?: UpdateInfo;
+}
+
+interface GitHubReleaseInfo {
+  tag_name: string;
+  html_url: string;
+  body: string;
+  draft: boolean;
 }
 
 /**
@@ -33,21 +39,13 @@ function isNewer(local: string, remote: string): boolean {
 
 /**
  * Check GitHub Releases for a newer version.
- * Only skips draft releases; prerelease versions are included.
+ * Uses a Rust backend command to avoid CORS/CSP restrictions in the WebView.
  */
 export async function checkForUpdate(): Promise<UpdateResult> {
   try {
     const currentVersion = await getVersion();
 
-    const res = await fetch(
-      `https://api.github.com/repos/${GITHUB_REPO}/releases`,
-      { headers: { Accept: "application/vnd.github.v3+json" } }
-    );
-    if (!res.ok) return { status: "error" };
-
-    const releases = await res.json();
-    const latest = (releases as Array<{ draft: boolean; tag_name: string; html_url: string; body: string }>)
-      .find((r) => !r.draft);
+    const latest = await invoke<GitHubReleaseInfo | null>("check_github_release");
 
     if (!latest) return { status: "no-release" };
 
