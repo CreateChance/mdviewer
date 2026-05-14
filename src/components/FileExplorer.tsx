@@ -176,7 +176,7 @@ export default function FileExplorer({
       <button
         className="fe-toggle"
         onClick={onToggle}
-        title={collapsed ? "展开文件" : "收起文件"}
+        title={collapsed ? "Expand files" : "Collapse files"}
       >
         {collapsed ? "◀" : "▶"}
       </button>

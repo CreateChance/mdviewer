@@ -126,11 +126,11 @@ const ALERT_TYPES = ["NOTE", "TIP", "IMPORTANT", "CAUTION", "WARNING"] as const;
 type AlertType = (typeof ALERT_TYPES)[number];
 
 const ALERT_META: Record<AlertType, { icon: string; label: string }> = {
-  NOTE:      { icon: "ℹ️",  label: "备注" },
-  TIP:       { icon: "💡", label: "提示" },
-  IMPORTANT: { icon: "❗", label: "重要" },
-  CAUTION:   { icon: "⚠️",  label: "注意" },
-  WARNING:   { icon: "🚨", label: "警告" },
+  NOTE:      { icon: "ℹ️",  label: "Note" },
+  TIP:       { icon: "💡", label: "Tip" },
+  IMPORTANT: { icon: "❗", label: "Important" },
+  CAUTION:   { icon: "⚠️",  label: "Caution" },
+  WARNING:   { icon: "🚨", label: "Warning" },
 };
 
 /**
@@ -225,8 +225,8 @@ function CodeBlock({
           <button
             className="code-action-btn"
             onClick={handleCopy}
-            title={copied ? "已复制" : "复制代码"}
-            aria-label="复制代码"
+            title={copied ? "Copied" : "Copy code"}
+            aria-label="Copy code"
           >
             {copied ? (
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M13.5 4.5L6.5 11.5L2.5 7.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -237,8 +237,8 @@ function CodeBlock({
           <button
             className="code-action-btn"
             onClick={() => setExpanded((p) => !p)}
-            title={expanded ? "退出全屏" : "全屏"}
-            aria-label={expanded ? "退出全屏" : "全屏"}
+            title={expanded ? "Exit fullscreen" : "Fullscreen"}
+            aria-label={expanded ? "Exit fullscreen" : "Fullscreen"}
           >
             {expanded ? (
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 2v4h4M6 14v-4H2M10 6L14.5 1.5M6 10L1.5 14.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -249,8 +249,8 @@ function CodeBlock({
           <button
             className="code-action-btn"
             onClick={() => setCollapsed((p) => !p)}
-            title={collapsed ? "展开" : "折叠"}
-            aria-label={collapsed ? "展开" : "折叠"}
+            title={collapsed ? "Expand" : "Collapse"}
+            aria-label={collapsed ? "Expand" : "Collapse"}
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className={collapsed ? "code-chevron-collapsed" : ""}>
               <path d="M4 6l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>

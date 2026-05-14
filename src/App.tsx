@@ -222,11 +222,11 @@ function App() {
           ) : (
             <div className="welcome">
               <div className="welcome-icon">📄</div>
-              <p>{hasExplorer ? "从右侧文件列表中选择一个文件" : "打开一个 Markdown 文件或文件夹开始阅读"}</p>
+              <p>{hasExplorer ? "Select a file from the list on the right" : "Open a Markdown file or folder to start reading"}</p>
               {!hasExplorer && (
                 <div className="welcome-actions">
-                  <button className="welcome-open" onClick={openFileDialog}>打开文件</button>
-                  <button className="welcome-open" onClick={openFolderDialog}>打开文件夹</button>
+                  <button className="welcome-open" onClick={openFileDialog}>Open File</button>
+                  <button className="welcome-open" onClick={openFolderDialog}>Open Folder</button>
                 </div>
               )}
             </div>
@@ -250,16 +250,16 @@ function App() {
         <button
           className="fab"
           onClick={cycleWidth}
-          title={`阅读宽度: ${widthLabel}`}
-          aria-label={`切换阅读宽度，当前: ${widthLabel}`}
+          title={`Reading width: ${widthLabel}`}
+          aria-label={`Toggle reading width, current: ${widthLabel}`}
         >
           {widthIcon}
         </button>
         <button
           className="fab"
           onClick={toggleTheme}
-          title="切换主题"
-          aria-label={theme === "light" ? "切换到深色模式" : "切换到浅色模式"}
+          title="Toggle theme"
+          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
           {theme === "light" ? "🌙" : "☀️"}
         </button>

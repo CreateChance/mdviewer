@@ -70,7 +70,7 @@ function TocTreeItem({
             className="toc-toggle"
             onClick={() => setExpanded((p) => !p)}
             role="button"
-            aria-label={expanded ? "折叠" : "展开"}
+            aria-label={expanded ? "Collapse" : "Expand"}
           >
             {expanded ? "▾" : "▸"}
           </span>
@@ -221,13 +221,13 @@ export default function Sidebar({ markdown, collapsed, onToggle, onResizeStateCh
       className={`sidebar ${collapsed ? "collapsed" : ""} ${dragging ? "dragging" : ""}`}
       style={collapsed ? undefined : { width, minWidth: width }}
     >
-      <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? "展开目录" : "收起目录"}>
+      <button className="sidebar-toggle" onClick={onToggle} title={collapsed ? "Expand TOC" : "Collapse TOC"}>
         {collapsed ? "▶" : "◀"}
       </button>
       {!collapsed && (
         <>
           <nav className="toc">
-            <h3 className="toc-title">目录</h3>
+            <h3 className="toc-title">Table of Contents</h3>
             <ul className="toc-list">
               {tocTree.map((node, i) => (
                 <TocTreeItem

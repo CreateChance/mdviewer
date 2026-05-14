@@ -11,7 +11,7 @@ interface SearchBarProps {
 
 /** Find all text match ranges inside a container element.
  *  Concatenates all text nodes so that matches spanning across adjacent
- *  text nodes (e.g. "生产：") are found correctly.
+ *  text nodes are found correctly.
  */
 function findMatches(root: Element, query: string): Range[] {
   if (!query) return [];
@@ -277,7 +277,7 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
         ref={inputRef}
         className="search-input"
         type="text"
-        placeholder="搜索..."
+        placeholder="Search..."
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => {
@@ -296,9 +296,9 @@ export default function SearchBar({ containerSelector, contentSelector, filePath
       <span className="search-count">
         {query ? `${matchCount > 0 ? currentIdx + 1 : 0} / ${matchCount}` : ""}
       </span>
-      <button className="search-nav-btn" onClick={goPrev} title="上一个 (Shift+⌘G)" disabled={matchCount === 0}>▲</button>
-      <button className="search-nav-btn" onClick={goNext} title="下一个 (⌘G)" disabled={matchCount === 0}>▼</button>
-      <button className="search-close-btn" onClick={close} title="关闭 (Esc)">✕</button>
+      <button className="search-nav-btn" onClick={goPrev} title="Previous (Shift+⌘G)" disabled={matchCount === 0}>▲</button>
+      <button className="search-nav-btn" onClick={goNext} title="Next (⌘G)" disabled={matchCount === 0}>▼</button>
+      <button className="search-close-btn" onClick={close} title="Close (Esc)">✕</button>
     </div>
   );
 }
